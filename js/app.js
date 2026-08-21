@@ -24,6 +24,7 @@ const App = {
         });
         window.addEventListener('ksj:wishlist-updated', () => this.updateWishlistBadge());
         window.addEventListener('ksj:auth-changed', () => this.updateUserMenu());
+        window.addEventListener('ksj:admin-auth-changed', () => this.updateUserMenu());
         window.addEventListener('ksj:products-updated', () => this.refreshCurrentView());
         window.addEventListener('ksj:orders-updated', () => this.refreshCurrentView());
         window.addEventListener('ksj:reviews-updated', () => this.refreshCurrentView());
@@ -201,8 +202,10 @@ const App = {
 
     updateUserMenu() {
         const user = Store.getUser();
+        const admin = Store.getAdmin();
         const isLocked = Store.isCustomerLocked();
         const btnText = document.getElementById('user-btn-text');
+
         if (btnText) {
             if (user) {
                 btnText.innerText = user.name.split(' ')[0];
@@ -210,7 +213,28 @@ const App = {
                 const savedProfile = Store.getSavedCustomerProfile();
                 btnText.innerText = `🔒 Unlock (${savedProfile?.name ? savedProfile.name.split(' ')[0] : 'Session'})`;
             } else {
-                btnText.innerText = 'Sign In';
+                btnText.innerText = 'Customer Sign In';
+            }
+        }
+
+        // Strictly toggle Admin Navigation (Only visible when Admin Session is Active)
+        const navAdminBtn = document.getElementById('nav-admin-btn');
+        const mobileAdminBtn = document.getElementById('mobile-admin-btn');
+        if (admin) {
+            if (navAdminBtn) {
+                navAdminBtn.classList.remove('hidden');
+                navAdminBtn.classList.add('flex');
+            }
+            if (mobileAdminBtn) {
+                mobileAdminBtn.classList.remove('hidden');
+            }
+        } else {
+            if (navAdminBtn) {
+                navAdminBtn.classList.add('hidden');
+                navAdminBtn.classList.remove('flex');
+            }
+            if (mobileAdminBtn) {
+                mobileAdminBtn.classList.add('hidden');
             }
         }
     },
@@ -1517,7 +1541,7 @@ const App = {
                             <span class="text-xs font-semibold text-stone-300 bg-stone-800 px-3 py-1.5 rounded-lg border border-stone-700">
                                 👤 Vinod Kumar Soni (Owner)
                             </span>
-                            <button onclick="Store.logoutAdmin()" class="px-3 py-1.5 bg-red-950 hover:bg-red-900 text-red-200 text-xs font-bold rounded-lg border border-red-800">
+                            <button onclick="App.handleAdminLogout()" class="px-3 py-1.5 bg-red-950 hover:bg-red-900 text-red-200 text-xs font-bold rounded-lg border border-red-800">
                                 Logout
                             </button>
                         </div>
@@ -3152,6 +3176,15 @@ const App = {
             this.refreshCurrentView();
         } else {
             this.showToast(res.message, 'error');
+        }
+    },
+
+    handleAdminLogout() {
+        if (confirm('Are you sure you want to log out from the Admin Control Panel?')) {
+            Store.logoutAdmin();
+            this.showToast('🔒 Admin session logged out safely. Switched to Customer View.', 'info');
+            this.updateUserMenu();
+            this.navigateTo('home');
         }
     }
 };

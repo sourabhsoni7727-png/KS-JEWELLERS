@@ -477,8 +477,18 @@ const Store = {
         const lockout = this.getAdminLockoutInfo();
         const currentDeviceId = this.getDeviceId();
         const currentPassword = this.getAdminPassword();
+        const cleanEmail = (email || '').trim().toLowerCase();
 
-        // 1. Check if 72-Hour Security Lockout is Active
+        // 1. Verify Admin Email Strictly (Only admin@ksjewellers.com allowed)
+        if (cleanEmail !== 'admin@ksjewellers.com') {
+            this.addSecurityLog('INVALID_ADMIN_EMAIL', `Admin login attempted with unauthorized email: ${email} on device ${currentDeviceId}.`);
+            return {
+                success: false,
+                message: '❌ ACCESS DENIED: Invalid Admin Email! Admin access is strictly reserved for Owner email admin@ksjewellers.com.'
+            };
+        }
+
+        // 2. Check 72-Hour Security Lockout
         if (lockout.isLocked) {
             this.addSecurityLog('BLOCKED_LOGIN_ATTEMPT_DURING_LOCKOUT', `Attempt from device ${currentDeviceId} while 72h lockout active.`);
             return {
@@ -488,69 +498,65 @@ const Store = {
             };
         }
 
-        // 2. Check Single Device Binding
+        // 3. Check Registered Device Ownership (Mobile / Laptop Lock)
         const boundDevice = localStorage.getItem('ksj_admin_bound_device');
         if (boundDevice && boundDevice !== currentDeviceId) {
-            this.addSecurityLog('SINGLE_DEVICE_LOCK_BLOCKED', `Login attempt from unauthorized Device ID: ${currentDeviceId}. Bound device: ${boundDevice}`);
+            this.addSecurityLog('UNAUTHORIZED_DEVICE_LOCK_BLOCKED', `Login attempt from unauthorized device ${currentDeviceId}. Registered owner device: ${boundDevice}`);
             return {
                 success: false,
                 isDeviceLocked: true,
-                message: `🔒 SINGLE DEVICE LOCK ACTIVE: Admin is already registered on another device! Access restricted to registered device. Contact Owner Vinod Kumar Soni (9413435295) for device authorization reset.`
+                message: `🔒 OWNER DEVICE LOCK ACTIVE: Admin login is permitted ONLY on Owner Vinod Kumar Soni's authorized mobile/laptop! Use Mobile OTP on 9413435295 to authorize this device.`
             };
         }
 
-        // 3. Verify Admin Credentials against stored password
-        if (email === 'admin@ksjewellers.com' && password === currentPassword) {
-            // Reset failed attempts & bind device
-            localStorage.setItem('ksj_admin_failed_attempts', '0');
-            localStorage.removeItem('ksj_admin_lockout_until');
-            localStorage.setItem('ksj_admin_bound_device', currentDeviceId);
+        // 4. Verify Admin Password
+        if (password !== currentPassword) {
+            let attempts = lockout.attempts + 1;
+            localStorage.setItem('ksj_admin_failed_attempts', attempts.toString());
+            this.addSecurityLog('ADMIN_LOGIN_FAILED', `Failed attempt #${attempts}/5 for email ${cleanEmail} on device ${currentDeviceId}. SMS alert sent to 9413435295.`);
 
-            const admin = {
-                name: 'Vinod Kumar Soni (Admin)',
-                email,
-                role: 'admin',
-                deviceId: currentDeviceId,
-                loginTime: new Date().toISOString()
-            };
-            localStorage.setItem('ksj_admin', JSON.stringify(admin));
+            if (attempts >= 5) {
+                const lockoutTime = Date.now() + (72 * 60 * 60 * 1000);
+                localStorage.setItem('ksj_admin_lockout_until', lockoutTime.toString());
+                this.addSecurityLog('72H_LOCKOUT_TRIGGERED', `5 Failed attempts reached! Admin portal locked for 72 hours. Alert sent to Owner Vinod Kumar Soni (9413435295).`);
 
-            // Log security notification to owner
-            this.addSecurityLog('ADMIN_LOGIN_SUCCESS', `Admin logged in successfully on Device: ${currentDeviceId}. SMS alert dispatched to Owner Vinod Kumar Soni (9413435295).`);
-
-            window.dispatchEvent(new CustomEvent('ksj:admin-auth-changed', { detail: admin }));
-            return {
-                success: true,
-                admin,
-                message: 'Admin access authorized! Security alert logged for Owner Vinod Kumar Soni (9413435295).'
-            };
-        }
-
-        // 4. Handle Failed Login Attempt
-        let attempts = lockout.attempts + 1;
-        localStorage.setItem('ksj_admin_failed_attempts', attempts.toString());
-
-        this.addSecurityLog('ADMIN_LOGIN_FAILED', `Failed attempt #${attempts}/5 for email ${email} on device ${currentDeviceId}. SMS alert sent to 9413435295.`);
-
-        if (attempts >= 5) {
-            // Lock out for 72 Hours (72 * 60 * 60 * 1000 ms)
-            const lockoutTime = Date.now() + (72 * 60 * 60 * 1000);
-            localStorage.setItem('ksj_admin_lockout_until', lockoutTime.toString());
-            this.addSecurityLog('72H_LOCKOUT_TRIGGERED', `5 Failed attempts reached! Admin portal locked for 72 hours until ${new Date(lockoutTime).toLocaleString()}. Urgent SMS alert sent to Owner Vinod Kumar Soni (9413435295).`);
+                return {
+                    success: false,
+                    isLocked: true,
+                    attempts,
+                    message: `🚨 SECURITY LOCKOUT ACTIVATED! 5 Failed login attempts detected. Admin panel is now LOCKED FOR 72 HOURS. Security notification dispatched to Vinod Kumar Soni (9413435295).`
+                };
+            }
 
             return {
                 success: false,
-                isLocked: true,
                 attempts,
-                message: `🚨 SECURITY LOCKOUT ACTIVATED! 5 Failed login attempts detected. Admin panel is now LOCKED FOR 72 HOURS. Security notification dispatched to Vinod Kumar Soni (9413435295).`
+                remainingAttempts: 5 - attempts,
+                message: `❌ INCORRECT ADMIN PASSWORD! Attempt ${attempts} of 5. Warning: 5 wrong attempts will lock access for 72 Hours.`
             };
         }
 
+        // 5. Successful Admin Authentication & Device Binding
+        localStorage.setItem('ksj_admin_failed_attempts', '0');
+        localStorage.removeItem('ksj_admin_lockout_until');
+        localStorage.setItem('ksj_admin_bound_device', currentDeviceId);
+
+        const admin = {
+            name: 'Vinod Kumar Soni (Admin)',
+            email: cleanEmail,
+            role: 'admin',
+            deviceId: currentDeviceId,
+            loginTime: new Date().toISOString()
+        };
+        localStorage.setItem('ksj_admin', JSON.stringify(admin));
+
+        this.addSecurityLog('ADMIN_LOGIN_SUCCESS', `Admin logged in successfully with admin@ksjewellers.com on authorized device: ${currentDeviceId}.`);
+        window.dispatchEvent(new CustomEvent('ksj:admin-auth-changed', { detail: admin }));
+
         return {
-            success: false,
-            attempts,
-            remainingAttempts: 5 - attempts,
-            message: `Invalid Admin Credentials! Attempt ${attempts} of 5. Warning: 5 wrong attempts will lock admin login for 72 Hours. Alert sent to Owner (9413435295).`
+            success: true,
+            admin,
+            message: '✅ Owner Admin Access Authorized! Security alert logged for Owner Vinod Kumar Soni (9413435295).'
         };
     },
 
