@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KS Jewellers and Makers | Minimal Luxury Jewellery Boutique | Jhunjhunu</title>
+    <meta name="description" content="KS Jewellers and Makers - Owned by Vinod Kumar Soni. B-171, Indira Nagar, Mandawa Moad, Jhunjhunu, Rajasthan. Pure 22K/24K BIS Hallmarked Gold & Silver Jewellery. Live Gold Rates, Custom Making, Insured Shipping. Phone: 9413435295.">
+    
+    <!-- Favicon Badge -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%231C1917' stroke='%23D4AF37' stroke-width='4'/><text x='50%' y='58%' font-family='Georgia, serif' font-size='28' font-weight='bold' fill='%23D4AF37' text-anchor='middle'>KSJ</text></svg>">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: {
+                            50: '#FAF8F5',
+                            100: '#F5F0E8',
+                            200: '#EBE1D3'
+                        },
+                        luxury: {
+                            gold: '#C5A059',
+                            goldLight: '#E5C784',
+                            goldDark: '#9A7B38',
+                            goldAccent: '#D4AF37',
+                            dark: '#1C1917',
+                            charcoal: '#292524'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js for Live Rates -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Canvas Confetti for Orders -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body class="bg-cream-50 text-luxury-dark antialiased selection:bg-luxury-gold selection:text-white">
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- MAIN NAVBAR -->
+    <header class="relative z-40 bg-maroon-header border-b-2 border-luxury-gold shadow-2xl transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-24 sm:h-28">
+                
+                <!-- Left: Mobile Menu + Big Logo Badge + Shop Name Inline (0.7s Left-to-Right Slide Animation) -->
+                <div class="flex items-center gap-3 sm:gap-4 cursor-pointer group py-2 animate-slide-left" onclick="App.navigateTo('home')">
+                    <button id="mobile-menu-btn" onclick="event.stopPropagation(); App.toggleMobileMenu()" class="lg:hidden p-1.5 text-amber-300 hover:text-white focus:outline-none">
+                        <i data-lucide="menu" class="w-7 h-7"></i>
+                    </button>
+
+                    <!-- Royal Crown KSJ Logo Image -->
+                    <img src="images/logo.jpg" alt="KS Jewellers & Makers Logo" class="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full object-cover shadow-2xl border-2 border-luxury-gold shrink-0 transition-transform duration-300 hover:scale-105">
+
+                    <!-- Shop Name Right Next To Logo -->
+                    <div class="flex flex-col justify-center">
+                        <h1 class="font-serif-luxury font-black text-xl sm:text-2xl lg:text-3xl xl:text-4xl text-gold-bright group-hover:text-white transition-colors tracking-wide uppercase leading-tight">
+                            KS JEWELLERS <span class="gold-text-gradient font-black">AND MAKERS</span>
+                        </h1>
+                        <span class="text-[9px] sm:text-xs font-bold text-gold-light uppercase tracking-widest block font-sans mt-0.5">
+                            VINOD KUMAR SONI &bull; MANDAWA MOAD, JHUNJHUNU
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Right: Utility Icons (Wishlist, Cart, User, Admin) -->
+                <div class="flex items-center gap-3 sm:gap-5">
+                    <!-- Wishlist -->
+                    <button onclick="App.navigateTo('shop', { wishlistOnly: true })" class="relative p-2 text-amber-300 hover:text-white transition-colors" title="Wishlist">
+                        <i data-lucide="heart" class="w-5 h-5"></i>
+                        <span id="wishlist-badge" class="hidden absolute top-1 right-1 bg-luxury-gold text-stone-950 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                    </button>
+
+                    <!-- Cart Drawer Trigger -->
+                    <button onclick="App.toggleCartDrawer()" class="relative p-2 text-amber-300 hover:text-white transition-colors" title="Shopping Cart">
+                        <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                        <span id="cart-badge" class="hidden absolute top-1 right-1 bg-amber-400 text-stone-950 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-luxury-gold">0</span>
+                    </button>
+
+                    <!-- Customer Profile / Login Button -->
+                    <button id="user-menu-btn" onclick="App.openCustomerAuthModal()" class="flex items-center gap-1.5 text-xs font-bold text-gold-light hover:text-white border border-amber-500/60 bg-stone-900/60 hover:bg-stone-900 rounded-full px-3.5 py-1.5 transition-all shadow">
+                        <i data-lucide="user" class="w-4 h-4 text-luxury-gold"></i>
+                        <span id="user-btn-text" class="hidden sm:inline">Sign In</span>
+                    </button>
+
+                    <!-- Admin Direct Button -->
+                    <button onclick="App.navigateTo('admin')" class="hidden sm:flex items-center gap-1 text-[11px] font-bold text-amber-300 hover:text-white bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 px-2.5 py-1.5 rounded-lg transition-colors" title="Admin Portal">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Admin</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Desktop Navigation Links (0.7s Left-to-Right Slide Animation) -->
+            <nav class="hidden lg:flex items-center justify-center gap-8 py-3 border-t border-amber-500/30 text-xs font-extrabold tracking-wider uppercase animate-slide-left">
+                <a href="#home" onclick="App.navigateTo('home')" class="nav-link text-amber-100 hover:text-luxury-goldLight transition-colors py-1">Home</a>
+                <a href="#shop" onclick="App.navigateTo('shop')" class="nav-link text-amber-100 hover:text-luxury-goldLight transition-colors py-1">Jewellery Collections</a>
+                <a href="#about" onclick="App.navigateTo('about')" class="nav-link text-amber-100 hover:text-luxury-goldLight transition-colors py-1">About Us</a>
+                <a href="#contact" onclick="App.navigateTo('contact')" class="nav-link text-amber-100 hover:text-luxury-goldLight transition-colors py-1">Contact & Showroom</a>
+                <a href="#track" onclick="App.navigateTo('track')" class="nav-link text-amber-100 hover:text-luxury-goldLight transition-colors py-1">Track Order</a>
+            </nav>
+        </div>
+
+        <!-- Mobile Drawer Navigation -->
+        <div id="mobile-menu-drawer" class="hidden lg:hidden bg-maroon-dark text-amber-100 border-b-2 border-luxury-gold px-4 pt-2 pb-6 space-y-3">
+            <div class="mb-3">
+                <input type="text" onkeyup="App.handleGlobalSearch(event)" placeholder="Search jewellery..." class="w-full pl-9 pr-4 py-2 text-xs bg-stone-900 border border-amber-500/40 text-white rounded-lg focus:outline-none">
+            </div>
+            <a href="#home" onclick="App.navigateTo('home'); App.toggleMobileMenu();" class="block py-2 text-sm font-semibold text-amber-200 border-b border-amber-900/40">Home</a>
+            <a href="#shop" onclick="App.navigateTo('shop'); App.toggleMobileMenu();" class="block py-2 text-sm font-semibold text-amber-200 border-b border-amber-900/40">Shop Collections</a>
+            <a href="#about" onclick="App.navigateTo('about'); App.toggleMobileMenu();" class="block py-2 text-sm font-semibold text-amber-200 border-b border-amber-900/40">About Vinod Kumar Soni</a>
+            <a href="#contact" onclick="App.navigateTo('contact'); App.toggleMobileMenu();" class="block py-2 text-sm font-semibold text-amber-200 border-b border-amber-900/40">Showroom Address & Contact</a>
+            <a href="#track" onclick="App.navigateTo('track'); App.toggleMobileMenu();" class="block py-2 text-sm font-semibold text-amber-200 border-b border-amber-900/40">Track Your Order</a>
+            <a href="#admin" onclick="App.navigateTo('admin'); App.toggleMobileMenu();" class="block py-2 text-sm font-semibold text-amber-400 flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i> Admin Portal
+            </a>
+        </div>
+    </header>
+
+    <!-- DYNAMIC VIEWS CONTAINER -->
+    <main id="app-viewport" class="min-h-screen">
+        <!-- Views rendered dynamically by app.js -->
+    </main>
+
+    <!-- FOOTER - CLEAN SINGLE ROW (SHOWROOM ADDRESS + NAVIGATION LINKS ONLY) -->
+    <footer class="bg-maroon-dark text-amber-100 border-t-2 border-luxury-gold py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pb-8 border-b border-amber-500/30">
+                
+                <!-- Left Side: Showroom Address & Contact Info -->
+                <div class="md:col-span-6 space-y-3 border-b md:border-b-0 md:border-r border-amber-500/30 pb-6 md:pb-0 md:pr-8">
+                    <div class="flex items-center gap-3 mb-2">
+                        <img src="images/logo.jpg" alt="KS Jewellers Logo" class="w-12 h-12 rounded-full object-cover border-2 border-luxury-gold shadow-md shrink-0">
+                        <div>
+                            <h3 class="font-serif-luxury text-xl font-extrabold text-amber-300 uppercase tracking-wide">KS JEWELLERS AND MAKERS</h3>
+                            <span class="text-[11px] text-amber-200/90 font-bold uppercase tracking-widest block">Proprietor: Vinod Kumar Soni</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-amber-100/90 pt-1">
+                        <div>
+                            <p class="flex items-start gap-2">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-luxury-gold shrink-0 mt-0.5"></i>
+                                <span>B-171, Indira Nagar, Mandawa Moad, Jhunjhunu, Rajasthan</span>
+                            </p>
+                            <a href="https://maps.google.com/?q=KS+Jewellers+and+Makers+B-171+Indira+Nagar+Mandawa+Mod+Jhunjhunu+Rajasthan" target="_blank" class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 hover:text-white hover:underline mt-1">
+                                <i data-lucide="navigation" class="w-3 h-3 text-emerald-400"></i> Open Live Google Maps &rarr;
+                            </a>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="flex items-center gap-2">
+                                <i data-lucide="phone" class="w-4 h-4 text-luxury-gold shrink-0"></i>
+                                <a href="tel:9413435295" class="text-amber-300 font-bold hover:underline">📞 9413435295</a>
+                            </p>
+                            <p class="flex items-center gap-2">
+                                <i data-lucide="clock" class="w-4 h-4 text-luxury-gold shrink-0"></i>
+                                <span>Mon - Sun: 10:00 AM - 8:30 PM</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: Navigation Links in a Horizontal Flex Row -->
+                <div class="md:col-span-6 md:pl-4">
+                    <h4 class="font-serif-luxury text-lg font-bold text-amber-300 mb-3 border-b border-amber-500/30 pb-1">Quick Navigation</h4>
+                    <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-semibold text-amber-100 uppercase tracking-wider">
+                        <a href="#home" onclick="App.navigateTo('home')" class="hover:text-amber-300 transition-colors flex items-center gap-1">
+                            <i data-lucide="chevron-right" class="w-3 h-3 text-luxury-gold"></i> Home
+                        </a>
+                        <a href="#shop" onclick="App.navigateTo('shop')" class="hover:text-amber-300 transition-colors flex items-center gap-1">
+                            <i data-lucide="chevron-right" class="w-3 h-3 text-luxury-gold"></i> Collections
+                        </a>
+                        <a href="#about" onclick="App.navigateTo('about')" class="hover:text-amber-300 transition-colors flex items-center gap-1">
+                            <i data-lucide="chevron-right" class="w-3 h-3 text-luxury-gold"></i> About Owner
+                        </a>
+                        <a href="#contact" onclick="App.navigateTo('contact')" class="hover:text-amber-300 transition-colors flex items-center gap-1">
+                            <i data-lucide="chevron-right" class="w-3 h-3 text-luxury-gold"></i> Showroom
+                        </a>
+                        <a href="#track" onclick="App.navigateTo('track')" class="hover:text-amber-300 transition-colors flex items-center gap-1">
+                            <i data-lucide="chevron-right" class="w-3 h-3 text-luxury-gold"></i> Track Order
+                        </a>
+                        <a href="#admin" onclick="App.navigateTo('admin')" class="text-amber-400 hover:text-white font-bold flex items-center gap-1">
+                            <i data-lucide="lock" class="w-3 h-3"></i> Admin Portal
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Copyright -->
+            <div class="pt-4 flex flex-col sm:flex-row justify-between items-center text-[11px] text-amber-200/80 gap-2">
+                <p>© 2026 <strong>KS JEWELLERS AND MAKERS</strong>. Owner: Vinod Kumar Soni &bull; Mandawa Moad, Jhunjhunu</p>
+                <p class="text-amber-300 font-semibold">100% BIS 916 Hallmarked Gold & 999 Silver</p>
+            </div>
+
+        </div>
+    </footer>
+
+    <!-- FLOATING WHATSAPP BUTTON -->
+    <a href="https://wa.me/919413435295?text=Hello%20Vinod%20Kumar%20Soni%20ji,%20I%20visited%20KS%20Jewellers%20website%20and%20want%20to%20enquire%20about%20your%20jewellery%20collection." target="_blank" class="whatsapp-float group" title="Chat on WhatsApp (9413435295)">
+        <div class="whatsapp-pulse"></div>
+        <i data-lucide="message-circle" class="w-7 h-7"></i>
+        <!-- Tooltip -->
+        <span class="hidden group-hover:block absolute right-16 top-2 bg-stone-900 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-lg border border-amber-500/30">
+            Chat with Vinod Soni 💬
+        </span>
+    </a>
+
+    <!-- PRODUCT DETAIL MODAL -->
+    <div id="product-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+        <div id="product-modal-content" class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-amber-900/20 modal-content relative p-6 sm:p-8">
+            <!-- Rendered by App.openProductModal -->
+        </div>
+    </div>
+
+    <!-- CART DRAWER -->
+    <div id="cart-drawer" class="hidden fixed inset-0 z-50 modal-backdrop flex justify-end">
+        <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col border-l border-amber-900/20 modal-content">
+            <div class="p-5 border-b border-stone-200 flex justify-between items-center bg-cream-50">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-luxury-gold"></i>
+                    <h3 class="font-serif-luxury text-xl font-bold text-stone-900">Your Shopping Cart</h3>
+                </div>
+                <button onclick="App.toggleCartDrawer()" class="text-stone-400 hover:text-stone-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div id="cart-drawer-items" class="flex-1 overflow-y-auto p-5 space-y-4">
+                <!-- Cart items rendered here -->
+            </div>
+
+            <div id="cart-drawer-footer" class="p-5 border-t border-stone-200 bg-cream-50 space-y-3">
+                <!-- Cart totals & checkout CTA -->
+            </div>
+        </div>
+    </div>
+
+    <!-- CHECKOUT MODAL -->
+    <div id="checkout-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border border-amber-900/20 modal-content relative p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b border-stone-200">
+                <div class="flex items-center gap-3">
+                    <img src="images/logo.jpg" alt="KSJ Logo" class="w-10 h-10 rounded-full object-cover border border-luxury-gold shadow-sm">
+                    <h2 class="font-serif-luxury text-2xl font-bold text-stone-900">Secure Order Checkout</h2>
+                </div>
+                <button onclick="App.closeCheckoutModal()" class="text-stone-400 hover:text-stone-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <div id="checkout-form-container">
+                <!-- Checkout steps rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOMER AUTH MODAL (LOGIN / REGISTER) -->
+    <div id="customer-auth-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-amber-900/20 modal-content relative p-6 sm:p-8">
+            <button onclick="App.closeCustomerAuthModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+            
+            <div class="text-center mb-6">
+                <img src="images/logo.jpg" alt="KSJ Logo" class="w-16 h-16 rounded-full object-cover border-2 border-luxury-gold mx-auto mb-3 shadow-lg">
+                <h3 class="font-serif-luxury text-2xl font-bold text-stone-900">Customer Portal</h3>
+                <p class="text-xs text-stone-500 mt-1">Sign in to view orders, track shipments & manage wishlist</p>
+            </div>
+
+            <div id="customer-auth-form-content">
+                <!-- Customer Login Form -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN AUTH MODAL -->
+    <div id="admin-auth-modal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+        <div class="bg-stone-900 rounded-2xl max-w-md w-full shadow-2xl border border-amber-500/30 modal-content relative p-6 sm:p-8 text-white">
+            <button onclick="App.closeAdminAuthModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-200">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-serif-luxury text-2xl font-bold text-amber-200">Admin Control Portal</h3>
+                <p class="text-xs text-stone-400 mt-1">Restricted access for Vinod Kumar Soni & Store Managers</p>
+            </div>
+
+            <!-- SECURITY WARNING ALERT BOX FOR WRONG PASSWORD -->
+            <div id="admin-login-warning-box"></div>
+
+            <form onsubmit="App.handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-stone-300 mb-1">Admin Email</label>
+                    <input type="email" id="admin-email" value="admin@ksjewellers.com" required class="w-full px-3 py-2 text-xs bg-stone-800 border border-stone-700 rounded-lg text-white focus:outline-none focus:border-amber-400">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-semibold text-stone-300">Password</label>
+                        <button type="button" onclick="App.openAdminPasswordResetModal()" class="text-[10px] text-amber-300 hover:text-amber-200 font-bold hover:underline">
+                            📲 Change Password via OTP
+                        </button>
+                    </div>
+                    <input type="password" id="admin-password" value="admin123" required class="w-full px-3 py-2 text-xs bg-stone-800 border border-stone-700 rounded-lg text-white focus:outline-none focus:border-amber-400">
+                    <span class="text-[10px] text-amber-400/80 mt-1 block">Default demo login: admin@ksjewellers.com / admin123</span>
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold text-xs rounded-lg hover:from-amber-500 hover:to-amber-400 transition-all shadow-lg shadow-amber-600/30">
+                    Authenticate Admin Access
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADMIN PASSWORD RESET WITH MOBILE OTP MODAL -->
+    <div id="admin-password-reset-modal" class="fixed inset-0 z-[101] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border-2 border-luxury-gold shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
+            <button onclick="App.closeAdminPasswordResetModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="text-center border-b border-amber-500/30 pb-4">
+                <div class="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center mx-auto mb-2 shadow-lg">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <h3 class="font-serif-luxury text-2xl font-bold text-gold-bright uppercase">Admin Mobile OTP Security</h3>
+                <p class="text-xs text-amber-200/80 mt-0.5">Password change authorized strictly for Owner Vinod Kumar Soni (9413435295)</p>
+            </div>
+
+            <!-- OTP Dispatch Banner Box -->
+            <div id="admin-otp-status-box" class="hidden p-3.5 bg-amber-950/80 border border-amber-500/50 rounded-2xl text-xs space-y-1 text-center">
+                <span class="font-bold text-amber-300 block">📲 Security OTP Sent to Mobile 9413435295</span>
+                <span class="text-[11px] text-amber-200/90 block font-mono" id="admin-otp-code-display"></span>
+            </div>
+
+            <form onsubmit="App.handleAdminPasswordChangeWithOTP(event)" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">Owner Mobile Number</label>
+                    <div class="flex gap-2">
+                        <input type="text" value="+91 9413435295 (Vinod Kumar Soni)" disabled class="flex-1 px-3 py-2 bg-stone-950 border border-stone-700 rounded-xl text-stone-400 font-mono font-bold">
+                        <button type="button" onclick="App.handleSendAdminOTP()" class="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-500 text-stone-950 font-black text-xs rounded-xl hover:from-amber-500 hover:to-amber-400 transition-all shadow shrink-0">
+                            📲 Send OTP
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">Enter 6-Digit Security OTP</label>
+                    <input type="text" id="admin-otp-input" maxlength="6" required placeholder="Enter OTP received on 9413435295" class="w-full px-3 py-2.5 bg-stone-950 border border-amber-500/40 rounded-xl text-amber-300 font-mono font-black text-center text-sm tracking-widest focus:outline-none focus:border-amber-400">
+                </div>
+
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">New Admin Password</label>
+                    <input type="password" id="admin-new-password" required placeholder="At least 6 characters" class="w-full px-3 py-2.5 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-semibold focus:outline-none focus:border-amber-400">
+                </div>
+
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">Confirm New Password</label>
+                    <input type="password" id="admin-confirm-password" required placeholder="Re-enter new password" class="w-full px-3 py-2.5 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-semibold focus:outline-none focus:border-amber-400">
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button type="submit" class="flex-1 py-3.5 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg border border-amber-300">
+                        🔑 Verify OTP & Update Password
+                    </button>
+                    <button type="button" onclick="App.closeAdminPasswordResetModal()" class="px-5 py-3.5 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-xs rounded-xl border border-stone-600">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+    </div>
+
+    <!-- ADMIN EDIT PRODUCT CATALOGUE MODAL WITH PHOTO CHANGE CAPABILITY -->
+    <div id="admin-edit-product-modal" class="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 rounded-3xl p-6 sm:p-8 max-w-xl w-full border-2 border-luxury-gold shadow-2xl relative space-y-4 max-h-[92vh] overflow-y-auto">
+            <button onclick="App.closeAdminEditProductModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="border-b border-amber-500/30 pb-3">
+                <h3 class="font-serif-luxury text-xl font-bold text-gold-bright uppercase">✏️ Edit Jewellery Item & Photo</h3>
+                <p class="text-xs text-amber-200/70">Modify product name, purity, weight, making charge, or upload/paste a new photo.</p>
+            </div>
+
+            <form onsubmit="App.handleAdminSaveProduct(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="edit-prod-id">
+
+                <!-- Image Preview & File Upload Controls -->
+                <div class="bg-stone-950 p-4 rounded-2xl border border-amber-500/40 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-amber-300 font-bold">📷 Product Image / Photo Settings</label>
+                        <button type="button" onclick="App.downloadProductImage(document.getElementById('edit-prod-image').value, document.getElementById('edit-prod-name').value)" class="px-3 py-1 bg-amber-950 hover:bg-amber-900 text-amber-300 text-[11px] font-bold rounded-lg border border-amber-500/50 flex items-center gap-1 shadow transition-all hover:scale-105">
+                            <i data-lucide="download" class="w-3.5 h-3.5 text-luxury-gold"></i> Download Photo 📥
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <img id="edit-prod-img-preview" src="" alt="Preview" class="w-20 h-20 object-cover rounded-xl border-2 border-luxury-gold shadow-md shrink-0 bg-stone-900">
+                        <div class="flex-1 space-y-2">
+                            <div>
+                                <label class="block text-[10px] text-stone-400 font-semibold mb-0.5">Paste Photo URL:</label>
+                                <input type="text" id="edit-prod-image" required oninput="document.getElementById('edit-prod-img-preview').src = this.value" placeholder="https://..." class="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 rounded-lg text-white font-mono text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-amber-300 font-semibold mb-0.5">Or Upload Photo File from Device:</label>
+                                <input type="file" id="edit-prod-file" accept="image/*" onchange="App.handleAdminImageUpload(event, 'edit-prod-image', 'edit-prod-img-preview')" class="w-full text-stone-300 text-xs file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-600 file:text-stone-950 hover:file:bg-amber-500 cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">Product Name</label>
+                    <input type="text" id="edit-prod-name" required class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-semibold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Category</label>
+                        <select id="edit-prod-category" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-amber-300 font-bold">
+                            <option value="necklaces">Necklaces & Sets</option>
+                            <option value="rings">Rings</option>
+                            <option value="earrings">Earrings & Jhumkas</option>
+                            <option value="bangles">Bangles & Kadas</option>
+                            <option value="bracelets">Bracelets & Anklets</option>
+                            <option value="pendants">Pendants</option>
+                            <option value="mangalsutra">Mangalsutra</option>
+                            <option value="coins">Gold & Silver Coins</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Purity & Metal</label>
+                        <select id="edit-prod-purity" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-amber-300 font-bold">
+                            <option value="22K Gold">22K Gold (916 BIS)</option>
+                            <option value="24K Gold">24K Pure Gold (999)</option>
+                            <option value="18K Gold">18K Diamond Gold</option>
+                            <option value="925 Silver">925 Sterling Silver</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Net Weight (Grams)</label>
+                        <input type="number" step="0.01" id="edit-prod-weight" required class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-bold">
+                    </div>
+
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Making Charge (₹)</label>
+                        <input type="number" step="1" id="edit-prod-making" required class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-gold-bright font-bold">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg border border-amber-300">
+                        💾 Save & Update Catalogue Item
+                    </button>
+                    <button type="button" onclick="App.closeAdminEditProductModal()" class="px-5 py-3 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-xs rounded-xl border border-stone-600">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- ADMIN EDIT ORDER MODAL -->
+    <div id="admin-edit-order-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border-2 border-luxury-gold shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
+            <button onclick="App.closeAdminEditOrderModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="border-b border-amber-500/30 pb-3">
+                <h3 class="font-serif-luxury text-xl font-bold text-gold-bright uppercase" id="edit-order-modal-title">✏️ Edit Order Record</h3>
+                <p class="text-xs text-amber-200/70">Modify customer name, contact, address, status, or amount.</p>
+            </div>
+
+            <form onsubmit="App.handleAdminSaveOrder(event)" class="space-y-3.5 text-xs">
+                <input type="hidden" id="edit-order-id">
+                <input type="hidden" id="edit-order-is-history" value="false">
+                
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">Customer Name</label>
+                    <input type="text" id="edit-order-customer-name" required class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-semibold">
+                </div>
+
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">Customer Phone Number</label>
+                    <input type="text" id="edit-order-customer-phone" required class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-amber-300 font-mono font-bold">
+                </div>
+
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">Shipping Address</label>
+                    <textarea id="edit-order-address" rows="2" required class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-medium"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Order Status</label>
+                        <select id="edit-order-status" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-amber-300 font-bold">
+                            <option value="Placed">Placed</option>
+                            <option value="Processing">Processing</option>
+                            <option value="Shipped">Shipped</option>
+                            <option value="Delivered">Delivered</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Payment Status</label>
+                        <select id="edit-order-payment-status" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-amber-300 font-bold">
+                            <option value="Paid">Paid</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Refund Initiated">Refund Initiated</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Payment Method</label>
+                        <select id="edit-order-payment-method" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-amber-300 font-bold">
+                            <option value="UPI Online">UPI Online</option>
+                            <option value="Cash on Delivery">Cash on Delivery</option>
+                            <option value="Credit / Debit Card">Credit / Debit Card</option>
+                            <option value="Net Banking">Net Banking</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Total Amount (₹)</label>
+                        <input type="number" id="edit-order-total" required class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-gold-bright font-black text-sm">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg border border-amber-300">
+                        💾 Save & Update Order Record
+                    </button>
+                    <button type="button" onclick="App.closeAdminEditOrderModal()" class="px-5 py-3 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-xs rounded-xl border border-stone-600">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script Files -->
+    <script src="js/data.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Lucide Initialization -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

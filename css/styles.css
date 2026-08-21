@@ -1,0 +1,250 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --bg-maroon: #3B060D;
+    --bg-maroon-dark: #2A0308;
+    --bg-cream: #2A0308;
+    --bg-warm-white: #3B060D;
+    --gold-primary: #D4AF37;
+    --gold-light: #F5E6C4;
+    --gold-bright: #F7D070;
+    --gold-accent: #F7D070;
+    --text-main: #F5E6C4;
+    --text-muted: #E2C380;
+    --border-gold-subtle: rgba(212, 175, 55, 0.4);
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #3B060D !important;
+    color: #F5E6C4 !important;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+h1, h2, h3, h4, .font-serif-luxury {
+    font-family: 'Cormorant Garamond', serif;
+    color: #F7D070 !important;
+}
+
+.font-playfair {
+    font-family: 'Playfair Display', serif;
+}
+
+/* Gold Gradient Text */
+.gold-text-gradient {
+    background: linear-gradient(135deg, #F7D070 0%, #F5E6C4 40%, #D4AF37 70%, #F7D070 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.gold-bg-gradient {
+    background: linear-gradient(135deg, #B8964B 0%, #D4AF37 50%, #C5A059 100%);
+}
+
+.gold-bg-subtle {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(42, 3, 8, 0.9) 100%);
+}
+
+.gold-border {
+    border-color: rgba(212, 175, 55, 0.4);
+}
+
+.gold-border-hover:hover {
+    border-color: rgba(247, 208, 112, 0.8);
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+}
+
+/* Royal Maroon Card Shadow & Hover */
+.luxury-card {
+    background: #2A0308 !important;
+    border: 1px solid rgba(212, 175, 55, 0.35) !important;
+    color: #F5E6C4 !important;
+    transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxury-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(247, 208, 112, 0.7) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 4px 12px rgba(212, 175, 55, 0.25);
+}
+
+/* Universal Overrides for Maroon Theme */
+.bg-white, .bg-cream-50, .bg-cream-100, .bg-stone-50, .bg-stone-100 {
+    background-color: #2A0308 !important;
+    color: #F5E6C4 !important;
+    border-color: rgba(212, 175, 55, 0.3) !important;
+}
+
+.bg-stone-900, .bg-stone-950, .bg-stone-800, .bg-luxury-dark {
+    background-color: #1F0206 !important;
+    color: #F5E6C4 !important;
+    border-color: rgba(212, 175, 55, 0.3) !important;
+}
+
+.text-stone-900, .text-stone-800, .text-stone-700 {
+    color: #F7D070 !important;
+}
+
+.text-stone-600, .text-stone-500, .text-stone-400 {
+    color: #F5E6C4 !important;
+}
+
+input, select, textarea {
+    background-color: #1F0206 !important;
+    color: #F7D070 !important;
+    border-color: rgba(212, 175, 55, 0.4) !important;
+}
+
+input::placeholder, textarea::placeholder {
+    color: #C5A059 !important;
+}
+
+/* Monogram Badge */
+.ksj-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #C5A059;
+    border-radius: 50%;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.ksj-badge:hover {
+    transform: scale(1.05);
+    border-color: #D4AF37;
+}
+
+/* Floating WhatsApp Button */
+.whatsapp-float {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
+    background: linear-gradient(135deg, #25D366, #128C7E);
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(37, 211, 102, 0.35);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 32px rgba(37, 211, 102, 0.5);
+}
+
+.whatsapp-pulse {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 14px;
+    height: 14px;
+    background-color: #FF3B30;
+    border: 2px solid white;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(255, 59, 48, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+
+/* Modal Animations */
+.modal-backdrop {
+    background-color: rgba(28, 25, 23, 0.65);
+    backdrop-filter: blur(6px);
+    transition: opacity 0.3s ease;
+}
+
+.modal-content {
+    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #FAF8F5;
+}
+::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #B8964B;
+}
+
+/* Ticker Animation */
+@keyframes ticker {
+    0% { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.ticker-wrap {
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.ticker-move {
+    display: inline-block;
+    white-space: nowrap;
+    animation: ticker 35s linear infinite;
+}
+
+.ticker-move:hover {
+    animation-play-state: paused;
+}
+
+/* Print receipt styling */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #printable-receipt, #printable-receipt * {
+        visibility: visible;
+    }
+    #printable-receipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+}
+
+/* Left-to-Right Entrance Slide-in Animations (0.7s Speed) */
+@keyframes slideInLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-120px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-slide-left {
+    animation: slideInLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
