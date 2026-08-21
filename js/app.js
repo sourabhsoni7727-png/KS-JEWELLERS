@@ -2595,7 +2595,16 @@ const App = {
     },
 
     openAdminAuthModal() {
-        document.getElementById('admin-auth-modal')?.classList.remove('hidden');
+        const modal = document.getElementById('admin-auth-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            const emailInput = document.getElementById('admin-email');
+            const passInput = document.getElementById('admin-password');
+            const warningBox = document.getElementById('admin-login-warning-box');
+            if (emailInput) emailInput.value = '';
+            if (passInput) passInput.value = '';
+            if (warningBox) warningBox.innerHTML = '';
+        }
     },
 
     closeAdminAuthModal() {
