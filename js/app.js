@@ -1689,19 +1689,24 @@ const App = {
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 ${products.map(p => `
-                                    <div class="bg-stone-900 p-4 rounded-2xl border border-stone-700 flex gap-3.5 items-center justify-between shadow-md">
-                                        <img src="${p.image}" class="w-16 h-16 rounded-xl object-cover border border-amber-500/40 shrink-0">
+                                    <div class="bg-stone-900 p-4 rounded-2xl border border-stone-700 flex gap-3.5 items-center justify-between shadow-md group">
+                                        <div class="relative cursor-pointer shrink-0" onclick="App.triggerDirectProductPhotoChange('${p.id}')" title="Click to Change Photo">
+                                            <img src="${p.image}" class="w-16 h-16 rounded-xl object-cover border-2 border-amber-500/40 group-hover:border-amber-400 transition-all">
+                                            <span class="absolute inset-0 bg-black/60 rounded-xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[9px] font-bold text-amber-300">
+                                                📸 Change
+                                            </span>
+                                        </div>
                                         <div class="flex-1 min-w-0">
-                                            <h4 class="font-bold text-white text-xs truncate">${p.name}</h4>
+                                            <h4 class="font-bold text-white text-xs truncate cursor-pointer hover:text-amber-300" onclick="App.openEditProductModal('${p.id}')">${p.name}</h4>
                                             <span class="text-[10px] text-stone-400">${p.purity} | ${p.weight}g</span>
                                             <span class="block text-xs font-bold text-amber-300">₹${Store.calculateProductPrice(p).toLocaleString('en-IN')}</span>
                                         </div>
                                         <div class="flex flex-col gap-1.5 shrink-0">
-                                            <button onclick="App.openEditProductModal('${p.id}')" class="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-[11px] rounded-lg border border-amber-500/40" title="Edit product details & photo">
+                                            <button onclick="App.openEditProductModal('${p.id}')" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 text-stone-950 font-black text-[11px] rounded-lg shadow border border-amber-300" title="Edit product details & photo">
                                                 ✏️ Edit
                                             </button>
-                                            <button onclick="App.downloadProductImage('${p.image}', '${encodeURIComponent(p.name)}')" class="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-[11px] rounded-lg border border-amber-500/40" title="Download Product Photo">
-                                                📥 Photo
+                                            <button onclick="App.triggerDirectProductPhotoChange('${p.id}')" class="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-[11px] rounded-lg border border-amber-500/40 flex items-center gap-1" title="Change photo from phone/computer or gallery">
+                                                📸 Photo
                                             </button>
                                             <button onclick="Store.deleteProduct('${p.id}')" class="px-2.5 py-1 bg-red-950 hover:bg-red-900 text-red-300 font-bold text-[11px] rounded-lg border border-red-800" title="Delete product">
                                                 🗑️ Delete
@@ -3374,6 +3379,14 @@ const App = {
         }
 
         event.target.value = '';
+    },
+
+    triggerDirectProductPhotoChange(productId) {
+        this.openEditProductModal(productId);
+        setTimeout(() => {
+            const singleFileInput = document.getElementById('edit-prod-single-file-input');
+            if (singleFileInput) singleFileInput.click();
+        }, 150);
     },
 
     // Edit Existing Product Modal
