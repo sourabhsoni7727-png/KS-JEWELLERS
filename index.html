@@ -401,6 +401,47 @@
             <form onsubmit="App.handleAdminSaveProduct(event)" class="space-y-3.5 text-xs">
                 <input type="hidden" id="edit-prod-id">
 
+                <!-- PROMINENT MAIN PHOTO PREVIEW & DIRECT "CHANGE PHOTO" ACTION CARD -->
+                <div class="bg-gradient-to-r from-stone-950 via-stone-900 to-stone-950 p-4 rounded-2xl border-2 border-luxury-gold shadow-xl flex flex-col sm:flex-row items-center gap-4">
+                    <!-- Current Primary Photo Thumbnail with Hover Change Overlay -->
+                    <div class="relative group cursor-pointer shrink-0" onclick="document.getElementById('edit-prod-single-file-input').click()" title="Click to Change Photo">
+                        <img id="edit-prod-main-preview" src="" alt="Main Product Photo" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl object-cover border-2 border-amber-400 shadow-xl bg-stone-900">
+                        <div class="absolute inset-0 bg-black/65 rounded-2xl flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity p-1 text-center">
+                            <i data-lucide="camera" class="w-6 h-6 text-amber-300 mb-1"></i>
+                            <span class="text-[10px] font-extrabold text-amber-200 uppercase tracking-wider">Click to Change</span>
+                        </div>
+                        <span class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-500 text-stone-950 text-[9px] font-black px-2.5 py-0.5 rounded-full shadow whitespace-nowrap border border-amber-300">
+                            ⭐ Cover Photo
+                        </span>
+                    </div>
+
+                    <!-- Direct Change Photo Action Buttons -->
+                    <div class="flex-1 text-center sm:text-left space-y-2 w-full">
+                        <div>
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-amber-400 block">Product Photo Management</span>
+                            <h4 class="font-serif-luxury font-bold text-sm text-white" id="edit-prod-title-preview">Jewellery Photo</h4>
+                            <p class="text-[11px] text-stone-400">Click below to upload a new photo from phone/laptop or select from store gallery.</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2 pt-1">
+                            <!-- Hidden Single File Picker Input -->
+                            <input type="file" id="edit-prod-single-file-input" accept="image/jpeg,image/png,image/webp" onchange="App.handleSinglePhotoChangeUpload(event)" class="hidden">
+
+                            <button type="button" onclick="document.getElementById('edit-prod-single-file-input').click()" class="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs rounded-xl shadow-lg border border-amber-300 flex items-center gap-1.5 transition-all hover:scale-105">
+                                <i data-lucide="camera" class="w-4 h-4"></i> 📸 Change Photo (Upload New)
+                            </button>
+
+                            <button type="button" onclick="App.openStoreGalleryPicker()" class="px-3.5 py-2 bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-xs rounded-xl border border-amber-500/40 flex items-center gap-1.5 transition-all">
+                                <i data-lucide="images" class="w-4 h-4"></i> 🖼️ Pick from Gallery
+                            </button>
+
+                            <button type="button" onclick="App.downloadProductImage(App.activeEditGallery[App.activeEditPrimary] || '', document.getElementById('edit-prod-name').value)" class="px-3 py-2 bg-amber-950 hover:bg-amber-900 text-amber-300 text-xs font-bold rounded-xl border border-amber-500/40 flex items-center gap-1">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i> 📥 Download
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- SHOPIFY / WOOCOMMERCE STYLE MEDIA & PHOTO GALLERY MANAGER -->
                 <div class="bg-stone-950 p-4 sm:p-5 rounded-2xl border border-amber-500/40 space-y-4">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-stone-800 pb-2.5">

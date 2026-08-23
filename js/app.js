@@ -3352,6 +3352,30 @@ const App = {
         this.showToast(`🎉 ${addedCount} gallery image(s) added to product!`, 'success');
     },
 
+    async handleSinglePhotoChangeUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        try {
+            this.showToast('📸 Compressing & converting new photo...', 'info');
+            const compressedDataUrl = await this.compressAndOptimizeImage(file);
+            
+            // Unshift as primary cover image
+            this.activeEditGallery.unshift(compressedDataUrl);
+            this.activeEditPrimary = 0;
+
+            const mainPreview = document.getElementById('edit-prod-main-preview');
+            if (mainPreview) mainPreview.src = compressedDataUrl;
+
+            this.renderEditProductGallery();
+            this.showToast('🎉 Photo changed successfully! Click "Save & Update Catalogue Item" to finish.', 'success');
+        } catch (err) {
+            this.showToast(`⚠️ ${err.message}`, 'error');
+        }
+
+        event.target.value = '';
+    },
+
     // Edit Existing Product Modal
     openEditProductModal(productId) {
         const product = Store.getProductById(productId);
@@ -3366,6 +3390,11 @@ const App = {
         document.getElementById('edit-prod-purity').value = product.purity || '22K Gold';
         document.getElementById('edit-prod-weight').value = product.weight || 0;
         document.getElementById('edit-prod-making').value = product.makingCharge || 0;
+
+        const mainPreview = document.getElementById('edit-prod-main-preview');
+        const titlePreview = document.getElementById('edit-prod-title-preview');
+        if (mainPreview) mainPreview.src = product.image || '';
+        if (titlePreview) titlePreview.textContent = product.name || 'Jewellery Photo';
 
         // Initialize active edit gallery array
         this.activeEditGallery = (product.images && product.images.length > 0) ? [...product.images] : [product.image];
