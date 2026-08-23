@@ -3121,8 +3121,25 @@ const App = {
             const primaryItem = this.activeEditGallery.splice(index, 1)[0];
             this.activeEditGallery.unshift(primaryItem);
             this.activeEditPrimary = 0;
+
+            const prodId = document.getElementById('edit-prod-id')?.value;
+            const product = prodId ? Store.getProductById(prodId) : null;
+
+            if (product) {
+                const updated = {
+                    ...product,
+                    image: primaryItem,
+                    images: [...this.activeEditGallery]
+                };
+                Store.saveProduct(updated);
+            }
+
+            const mainPreview = document.getElementById('edit-prod-main-preview');
+            if (mainPreview) mainPreview.src = primaryItem;
+
             this.renderEditProductGallery();
-            this.showToast('⭐ Set as Primary Product Cover Photo!', 'success');
+            this.showToast('⭐ Set as Primary Cover Photo & saved automatically!', 'success');
+            this.refreshCurrentView();
         }
     },
 
@@ -3132,7 +3149,26 @@ const App = {
             this.activeEditGallery.splice(toIdx, 0, item);
             if (this.activeEditPrimary === fromIdx) this.activeEditPrimary = toIdx;
             else if (this.activeEditPrimary === toIdx) this.activeEditPrimary = fromIdx;
+
+            const prodId = document.getElementById('edit-prod-id')?.value;
+            const product = prodId ? Store.getProductById(prodId) : null;
+
+            const primaryImage = this.activeEditGallery[this.activeEditPrimary] || this.activeEditGallery[0] || '';
+
+            if (product) {
+                const updated = {
+                    ...product,
+                    image: primaryImage,
+                    images: [...this.activeEditGallery]
+                };
+                Store.saveProduct(updated);
+            }
+
+            const mainPreview = document.getElementById('edit-prod-main-preview');
+            if (mainPreview) mainPreview.src = primaryImage;
+
             this.renderEditProductGallery();
+            this.refreshCurrentView();
         }
     },
 
@@ -3142,8 +3178,27 @@ const App = {
             if (this.activeEditPrimary >= this.activeEditGallery.length) {
                 this.activeEditPrimary = Math.max(0, this.activeEditGallery.length - 1);
             }
+
+            const prodId = document.getElementById('edit-prod-id')?.value;
+            const product = prodId ? Store.getProductById(prodId) : null;
+
+            const primaryImage = this.activeEditGallery[this.activeEditPrimary] || this.activeEditGallery[0] || '';
+
+            if (product) {
+                const updated = {
+                    ...product,
+                    image: primaryImage,
+                    images: [...this.activeEditGallery]
+                };
+                Store.saveProduct(updated);
+            }
+
+            const mainPreview = document.getElementById('edit-prod-main-preview');
+            if (mainPreview) mainPreview.src = primaryImage;
+
             this.renderEditProductGallery();
-            this.showToast('Image removed from product gallery.', 'info');
+            this.showToast('Image removed from gallery & updated.', 'info');
+            this.refreshCurrentView();
         }
     },
 
@@ -3156,10 +3211,29 @@ const App = {
             return;
         }
         if (!this.activeEditGallery.includes(url)) {
-            this.activeEditGallery.push(url);
+            this.activeEditGallery.unshift(url);
+            this.activeEditPrimary = 0;
+
+            const prodId = document.getElementById('edit-prod-id')?.value;
+            const product = prodId ? Store.getProductById(prodId) : null;
+
+            if (product) {
+                const updated = {
+                    ...product,
+                    image: url,
+                    images: [...this.activeEditGallery]
+                };
+                Store.saveProduct(updated);
+                Store.saveToCustomMediaGallery(url);
+            }
+
+            const mainPreview = document.getElementById('edit-prod-main-preview');
+            if (mainPreview) mainPreview.src = url;
+
             input.value = '';
             this.renderEditProductGallery();
-            this.showToast('Direct Image URL added to gallery!', 'success');
+            this.showToast('🎉 Direct Image URL added & saved automatically!', 'success');
+            this.refreshCurrentView();
         }
     },
 
@@ -3223,6 +3297,7 @@ const App = {
         if (progressBox) progressBox.classList.remove('hidden');
 
         let processedCount = 0;
+        let lastAddedUrl = null;
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
@@ -3232,7 +3307,8 @@ const App = {
 
                 const compressedDataUrl = await this.compressAndOptimizeImage(file);
                 if (!this.activeEditGallery.includes(compressedDataUrl)) {
-                    this.activeEditGallery.push(compressedDataUrl);
+                    this.activeEditGallery.unshift(compressedDataUrl);
+                    lastAddedUrl = compressedDataUrl;
                     Store.saveToCustomMediaGallery(compressedDataUrl);
                 }
                 processedCount++;
@@ -3242,9 +3318,27 @@ const App = {
         }
 
         if (progressBox) progressBox.classList.add('hidden');
+
+        const prodId = document.getElementById('edit-prod-id')?.value;
+        const product = prodId ? Store.getProductById(prodId) : null;
+
+        if (product && lastAddedUrl) {
+            this.activeEditPrimary = 0;
+            const updated = {
+                ...product,
+                image: lastAddedUrl,
+                images: [...this.activeEditGallery]
+            };
+            Store.saveProduct(updated);
+
+            const mainPreview = document.getElementById('edit-prod-main-preview');
+            if (mainPreview) mainPreview.src = lastAddedUrl;
+        }
+
         this.renderEditProductGallery();
         if (processedCount > 0) {
-            this.showToast(`🎉 ${processedCount} photo(s) compressed & added to product gallery!`, 'success');
+            this.showToast(`🎉 ${processedCount} photo(s) uploaded & saved automatically across store!`, 'success');
+            this.refreshCurrentView();
         }
     },
 
@@ -3344,22 +3438,45 @@ const App = {
             return;
         }
 
+        const prodId = document.getElementById('edit-prod-id')?.value;
+        const product = prodId ? Store.getProductById(prodId) : null;
+
         let addedCount = 0;
+        let lastAddedImg = null;
         this.selectedStoreGalleryImages.forEach(img => {
             if (!this.activeEditGallery.includes(img)) {
-                this.activeEditGallery.push(img);
+                this.activeEditGallery.unshift(img);
+                lastAddedImg = img;
                 addedCount++;
             }
         });
 
+        this.activeEditPrimary = 0;
+
+        if (product && lastAddedImg) {
+            const updated = {
+                ...product,
+                image: lastAddedImg,
+                images: [...this.activeEditGallery]
+            };
+            Store.saveProduct(updated);
+        }
+
+        const mainPreview = document.getElementById('edit-prod-main-preview');
+        if (mainPreview && lastAddedImg) mainPreview.src = lastAddedImg;
+
         this.closeStoreGalleryPicker();
         this.renderEditProductGallery();
-        this.showToast(`🎉 ${addedCount} gallery image(s) added to product!`, 'success');
+        this.showToast(`🎉 ${addedCount} gallery image(s) added & saved automatically!`, 'success');
+        this.refreshCurrentView();
     },
 
     async handleSinglePhotoChangeUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
+
+        const prodId = document.getElementById('edit-prod-id')?.value;
+        const product = prodId ? Store.getProductById(prodId) : null;
 
         try {
             this.showToast('📸 Compressing & converting new photo...', 'info');
@@ -3372,8 +3489,20 @@ const App = {
             const mainPreview = document.getElementById('edit-prod-main-preview');
             if (mainPreview) mainPreview.src = compressedDataUrl;
 
+            // AUTOMATIC INSTANT SAVE TO STORE SO THE NEW PHOTO IS REFLECTED EVERYWHERE IMMEDIATELY!
+            if (product) {
+                const updated = {
+                    ...product,
+                    image: compressedDataUrl,
+                    images: [...this.activeEditGallery]
+                };
+                Store.saveProduct(updated);
+                Store.saveToCustomMediaGallery(compressedDataUrl);
+            }
+
             this.renderEditProductGallery();
-            this.showToast('🎉 Photo changed successfully! Click "Save & Update Catalogue Item" to finish.', 'success');
+            this.showToast('🎉 Photo changed automatically! New photo is live across store.', 'success');
+            this.refreshCurrentView();
         } catch (err) {
             this.showToast(`⚠️ ${err.message}`, 'error');
         }
