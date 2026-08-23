@@ -136,10 +136,32 @@ const Store = {
         window.dispatchEvent(new CustomEvent('ksj:products-updated'));
     },
 
-    deleteProduct(id) {
-        let products = this.getProducts().filter(p => p.id !== id);
-        localStorage.setItem('ksj_products', JSON.stringify(products));
-        window.dispatchEvent(new CustomEvent('ksj:products-updated'));
+    getAllUploadedImages() {
+        const products = this.getProducts();
+        const gallerySet = new Set();
+
+        products.forEach(p => {
+            if (p.image) gallerySet.add(p.image);
+            if (p.images && Array.isArray(p.images)) {
+                p.images.forEach(img => {
+                    if (img) gallerySet.add(img);
+                });
+            }
+        });
+
+        const customMedia = JSON.parse(localStorage.getItem('ksj_custom_media_gallery')) || [];
+        customMedia.forEach(img => gallerySet.add(img));
+
+        return Array.from(gallerySet);
+    },
+
+    saveToCustomMediaGallery(imageSrc) {
+        if (!imageSrc) return;
+        const customMedia = JSON.parse(localStorage.getItem('ksj_custom_media_gallery')) || [];
+        if (!customMedia.includes(imageSrc)) {
+            customMedia.unshift(imageSrc);
+            localStorage.setItem('ksj_custom_media_gallery', JSON.stringify(customMedia.slice(0, 100)));
+        }
     },
 
     // Cart

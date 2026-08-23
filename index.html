@@ -401,27 +401,55 @@
             <form onsubmit="App.handleAdminSaveProduct(event)" class="space-y-3.5 text-xs">
                 <input type="hidden" id="edit-prod-id">
 
-                <!-- Image Preview & File Upload Controls -->
-                <div class="bg-stone-950 p-4 rounded-2xl border border-amber-500/40 space-y-3">
-                    <div class="flex justify-between items-center">
-                        <label class="block text-amber-300 font-bold">📷 Product Image / Photo Settings</label>
-                        <button type="button" onclick="App.downloadProductImage(document.getElementById('edit-prod-image').value, document.getElementById('edit-prod-name').value)" class="px-3 py-1 bg-amber-950 hover:bg-amber-900 text-amber-300 text-[11px] font-bold rounded-lg border border-amber-500/50 flex items-center gap-1 shadow transition-all hover:scale-105">
-                            <i data-lucide="download" class="w-3.5 h-3.5 text-luxury-gold"></i> Download Photo 📥
-                        </button>
-                    </div>
-                    
-                    <div class="flex items-center gap-4">
-                        <img id="edit-prod-img-preview" src="" alt="Preview" class="w-20 h-20 object-cover rounded-xl border-2 border-luxury-gold shadow-md shrink-0 bg-stone-900">
-                        <div class="flex-1 space-y-2">
-                            <div>
-                                <label class="block text-[10px] text-stone-400 font-semibold mb-0.5">Paste Photo URL:</label>
-                                <input type="text" id="edit-prod-image" required oninput="document.getElementById('edit-prod-img-preview').src = this.value" placeholder="https://..." class="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 rounded-lg text-white font-mono text-xs">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] text-amber-300 font-semibold mb-0.5">Or Upload Photo File from Device:</label>
-                                <input type="file" id="edit-prod-file" accept="image/*" onchange="App.handleAdminImageUpload(event, 'edit-prod-image', 'edit-prod-img-preview')" class="w-full text-stone-300 text-xs file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-600 file:text-stone-950 hover:file:bg-amber-500 cursor-pointer">
-                            </div>
+                <!-- SHOPIFY / WOOCOMMERCE STYLE MEDIA & PHOTO GALLERY MANAGER -->
+                <div class="bg-stone-950 p-4 sm:p-5 rounded-2xl border border-amber-500/40 space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-stone-800 pb-2.5">
+                        <div>
+                            <label class="block text-amber-300 font-bold text-xs uppercase tracking-wider">🖼️ Product Media & Photo Gallery Manager</label>
+                            <span class="text-[10px] text-stone-400">Drag to reorder, set primary cover, or select from store gallery. Max 10MB/photo.</span>
                         </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="App.openStoreGalleryPicker()" class="px-3 py-1.5 bg-amber-950/80 hover:bg-amber-900 text-amber-300 text-[11px] font-bold rounded-xl border border-amber-500/40 flex items-center gap-1 shadow">
+                                <i data-lucide="images" class="w-3.5 h-3.5"></i> Choose from Store Gallery
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ACTIVE PRODUCT IMAGES GRID (PREVIEWS, REORDER, PRIMARY, DELETE) -->
+                    <div id="edit-prod-gallery-container" class="grid grid-cols-2 sm:grid-cols-4 gap-3 min-h-[90px]">
+                        <!-- Rendered by App.renderEditProductGallery() -->
+                    </div>
+
+                    <!-- DRAG & DROP UPLOAD DROPZONE -->
+                    <div id="media-dropzone" 
+                         ondragover="App.handleDropzoneDragOver(event)" 
+                         ondragleave="App.handleDropzoneDragLeave(event)" 
+                         ondrop="App.handleDropzoneDrop(event)"
+                         onclick="document.getElementById('edit-prod-multi-files').click()"
+                         class="border-2 border-dashed border-amber-500/40 hover:border-amber-400 bg-stone-900/80 hover:bg-stone-900 p-4 sm:p-5 rounded-2xl text-center cursor-pointer transition-all space-y-1.5 group">
+                        <input type="file" id="edit-prod-multi-files" accept="image/jpeg,image/png,image/webp" multiple onchange="App.handleMultiFileUpload(event)" class="hidden">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                            <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                        </div>
+                        <p class="text-xs font-bold text-amber-200">📂 Drag & Drop Photos Here or Click to Browse Computer</p>
+                        <p class="text-[10px] text-stone-400">Supports JPG, JPEG, PNG, WebP &bull; Auto-Compressed & Optimized</p>
+                    </div>
+
+                    <!-- UPLOAD PROGRESS & OPTIMIZATION NOTIFICATION BAR -->
+                    <div id="media-upload-progress" class="hidden bg-stone-900 p-2.5 rounded-xl border border-amber-500/30 text-xs text-amber-300 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                            <span id="media-progress-text" class="font-bold text-[11px]">Optimizing & Compressing Images...</span>
+                        </div>
+                        <span id="media-progress-percent" class="font-mono font-bold text-[11px] text-emerald-400">100%</span>
+                    </div>
+
+                    <!-- OR PASTE DIRECT URL INPUT -->
+                    <div class="flex gap-2 items-center pt-1 border-t border-stone-800">
+                        <input type="text" id="edit-prod-image-url-input" placeholder="Or paste direct image URL (https://...)" class="flex-1 px-3 py-1.5 bg-stone-900 border border-stone-700 rounded-xl text-white font-mono text-xs focus:outline-none focus:border-amber-400">
+                        <button type="button" onclick="App.addDirectUrlToEditGallery()" class="px-3.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-amber-300 text-xs font-bold rounded-xl border border-amber-500/30 shrink-0">
+                            + Add URL
+                        </button>
                     </div>
                 </div>
 
@@ -541,6 +569,37 @@
             </form>
         </div>
     </div>
+    <!-- ADMIN STORE MEDIA GALLERY PICKER MODAL -->
+    <div id="admin-store-gallery-modal" class="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 rounded-3xl p-6 max-w-2xl w-full border-2 border-luxury-gold shadow-2xl relative space-y-4 max-h-[88vh] flex flex-col text-white">
+            <button onclick="App.closeStoreGalleryPicker()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="border-b border-amber-500/30 pb-3">
+                <h3 class="font-serif-luxury text-xl font-bold text-gold-bright uppercase">🖼️ Store Media Gallery Picker</h3>
+                <p class="text-xs text-amber-200/70">Select one or multiple previously uploaded images from your store library.</p>
+            </div>
+
+            <!-- GALLERY GRID ITEMS -->
+            <div id="store-gallery-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-3 overflow-y-auto flex-1 p-1 scrollbar-thin max-h-[50vh]">
+                <!-- Populated dynamically by App.renderStoreGalleryGrid() -->
+            </div>
+
+            <div class="border-t border-stone-800 pt-3 flex justify-between items-center">
+                <span id="store-gallery-selected-count" class="text-xs font-bold text-amber-300">0 Images Selected</span>
+                <div class="flex gap-3">
+                    <button type="button" onclick="App.addSelectedGalleryImagesToProduct()" class="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-amber-500 text-stone-950 font-bold text-xs rounded-xl shadow border border-amber-300">
+                        ➕ Add Selected Images to Product
+                    </button>
+                    <button type="button" onclick="App.closeStoreGalleryPicker()" class="px-4 py-2.5 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-xs rounded-xl">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ADMIN EDIT ORDER MODAL -->
     <div id="admin-edit-order-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border-2 border-luxury-gold shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">

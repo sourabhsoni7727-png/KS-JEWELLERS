@@ -3049,21 +3049,307 @@ const App = {
         if (window.lucide) lucide.createIcons();
     },
 
-    // Admin Image Upload Converter (Data URI)
-    handleAdminImageUpload(event, targetInputId, previewImgId) {
-        const file = event.target.files[0];
-        if (!file) return;
+    // SHOPIFY / WOOCOMMERCE STYLE MEDIA & PHOTO GALLERY MANAGER LOGIC
+    activeEditGallery: [],
+    activeEditPrimary: 0,
+    selectedStoreGalleryImages: new Set(),
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const dataUrl = e.target.result;
-            const targetInput = document.getElementById(targetInputId);
-            const previewImg = document.getElementById(previewImgId);
-            if (targetInput) targetInput.value = dataUrl;
-            if (previewImg) previewImg.src = dataUrl;
-            this.showToast('📷 Photo loaded & converted successfully!', 'info');
-        };
-        reader.readAsDataURL(file);
+    renderEditProductGallery() {
+        const container = document.getElementById('edit-prod-gallery-container');
+        if (!container) return;
+
+        if (!this.activeEditGallery || this.activeEditGallery.length === 0) {
+            container.innerHTML = `
+                <div class="col-span-2 sm:col-span-4 p-4 text-center text-stone-400 bg-stone-900/60 rounded-xl border border-stone-800 text-xs">
+                    No images attached to this product yet. Click <strong>"Choose from Store Gallery"</strong> or <strong>"Upload Photos"</strong> below.
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.activeEditGallery.map((img, index) => {
+            const isPrimary = index === this.activeEditPrimary;
+            return `
+                <div class="relative group bg-stone-900 rounded-xl overflow-hidden border-2 ${isPrimary ? 'border-amber-400 ring-2 ring-amber-400/40 shadow-lg' : 'border-stone-700/80'} p-1.5 flex flex-col justify-between">
+                    <!-- Primary Badge -->
+                    ${isPrimary ? `
+                        <span class="absolute top-2 left-2 bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 text-[9px] font-black px-2 py-0.5 rounded-md shadow z-10 flex items-center gap-1">
+                            ⭐ Cover Photo
+                        </span>
+                    ` : ''}
+
+                    <div class="relative w-full h-24 sm:h-28 rounded-lg overflow-hidden bg-stone-950">
+                        <img src="${img}" class="w-full h-full object-cover">
+                    </div>
+
+                    <div class="mt-1.5 flex items-center justify-between gap-1 text-[10px]">
+                        ${!isPrimary ? `
+                            <button type="button" onclick="App.setPrimaryEditImage(${index})" class="px-1.5 py-0.5 bg-amber-950/80 hover:bg-amber-900 text-amber-300 font-bold rounded border border-amber-500/40" title="Set as main cover image">
+                                ⭐ Primary
+                            </button>
+                        ` : '<span class="text-emerald-400 font-bold text-[10px]">✓ Main Cover</span>'}
+
+                        <div class="flex items-center gap-1">
+                            ${index > 0 ? `
+                                <button type="button" onclick="App.reorderEditImage(${index}, ${index - 1})" class="p-1 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded" title="Move Left">
+                                    ⬅️
+                                </button>
+                            ` : ''}
+                            ${index < this.activeEditGallery.length - 1 ? `
+                                <button type="button" onclick="App.reorderEditImage(${index}, ${index + 1})" class="p-1 bg-stone-800 hover:bg-stone-700 text-stone-300 rounded" title="Move Right">
+                                    ➡️
+                                </button>
+                            ` : ''}
+                            <button type="button" onclick="App.removeEditImage(${index})" class="p-1 bg-red-950 hover:bg-red-900 text-red-300 rounded border border-red-800" title="Delete Photo">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    setPrimaryEditImage(index) {
+        if (index >= 0 && index < this.activeEditGallery.length) {
+            this.activeEditPrimary = index;
+            const primaryItem = this.activeEditGallery.splice(index, 1)[0];
+            this.activeEditGallery.unshift(primaryItem);
+            this.activeEditPrimary = 0;
+            this.renderEditProductGallery();
+            this.showToast('⭐ Set as Primary Product Cover Photo!', 'success');
+        }
+    },
+
+    reorderEditImage(fromIdx, toIdx) {
+        if (fromIdx >= 0 && fromIdx < this.activeEditGallery.length && toIdx >= 0 && toIdx < this.activeEditGallery.length) {
+            const item = this.activeEditGallery.splice(fromIdx, 1)[0];
+            this.activeEditGallery.splice(toIdx, 0, item);
+            if (this.activeEditPrimary === fromIdx) this.activeEditPrimary = toIdx;
+            else if (this.activeEditPrimary === toIdx) this.activeEditPrimary = fromIdx;
+            this.renderEditProductGallery();
+        }
+    },
+
+    removeEditImage(index) {
+        if (confirm('Delete this image from the product gallery?')) {
+            this.activeEditGallery.splice(index, 1);
+            if (this.activeEditPrimary >= this.activeEditGallery.length) {
+                this.activeEditPrimary = Math.max(0, this.activeEditGallery.length - 1);
+            }
+            this.renderEditProductGallery();
+            this.showToast('Image removed from product gallery.', 'info');
+        }
+    },
+
+    addDirectUrlToEditGallery() {
+        const input = document.getElementById('edit-prod-image-url-input');
+        if (!input) return;
+        const url = input.value.trim();
+        if (!url) {
+            this.showToast('Please enter a valid image URL.', 'error');
+            return;
+        }
+        if (!this.activeEditGallery.includes(url)) {
+            this.activeEditGallery.push(url);
+            input.value = '';
+            this.renderEditProductGallery();
+            this.showToast('Direct Image URL added to gallery!', 'success');
+        }
+    },
+
+    // HTML5 CANVAS IMAGE COMPRESSOR & OPTIMIZER (WebP/JPEG)
+    compressAndOptimizeImage(file, maxDimension = 1200, quality = 0.85) {
+        return new Promise((resolve, reject) => {
+            const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+            if (!validTypes.includes(file.type.toLowerCase())) {
+                reject(new Error('Invalid format! Only JPG, JPEG, PNG, and WebP formats are supported.'));
+                return;
+            }
+
+            if (file.size > 10 * 1024 * 1024) {
+                reject(new Error('File size exceeds 10MB limit! Please choose a smaller photo.'));
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > maxDimension || height > maxDimension) {
+                        if (width > height) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        } else {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressedDataUrl);
+                };
+                img.onerror = () => reject(new Error('Failed to load image file.'));
+                img.src = e.target.result;
+            };
+            reader.onerror = () => reject(new Error('Failed to read file.'));
+            reader.readAsDataURL(file);
+        });
+    },
+
+    async processUploadedFiles(fileList) {
+        const files = Array.from(fileList);
+        if (files.length === 0) return;
+
+        const progressBox = document.getElementById('media-upload-progress');
+        const progressText = document.getElementById('media-progress-text');
+        const progressPercent = document.getElementById('media-progress-percent');
+
+        if (progressBox) progressBox.classList.remove('hidden');
+
+        let processedCount = 0;
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            try {
+                if (progressText) progressText.textContent = `Compressing & Optimizing ${file.name} (${i + 1}/${files.length})...`;
+                if (progressPercent) progressPercent.textContent = `${Math.round(((i + 1) / files.length) * 100)}%`;
+
+                const compressedDataUrl = await this.compressAndOptimizeImage(file);
+                if (!this.activeEditGallery.includes(compressedDataUrl)) {
+                    this.activeEditGallery.push(compressedDataUrl);
+                    Store.saveToCustomMediaGallery(compressedDataUrl);
+                }
+                processedCount++;
+            } catch (err) {
+                this.showToast(`⚠️ ${err.message}`, 'error');
+            }
+        }
+
+        if (progressBox) progressBox.classList.add('hidden');
+        this.renderEditProductGallery();
+        if (processedCount > 0) {
+            this.showToast(`🎉 ${processedCount} photo(s) compressed & added to product gallery!`, 'success');
+        }
+    },
+
+    handleMultiFileUpload(event) {
+        this.processUploadedFiles(event.target.files);
+        event.target.value = '';
+    },
+
+    handleDropzoneDragOver(event) {
+        event.preventDefault();
+        const dropzone = document.getElementById('media-dropzone');
+        if (dropzone) {
+            dropzone.classList.add('border-amber-400', 'bg-amber-950/40');
+        }
+    },
+
+    handleDropzoneDragLeave(event) {
+        event.preventDefault();
+        const dropzone = document.getElementById('media-dropzone');
+        if (dropzone) {
+            dropzone.classList.remove('border-amber-400', 'bg-amber-950/40');
+        }
+    },
+
+    handleDropzoneDrop(event) {
+        event.preventDefault();
+        const dropzone = document.getElementById('media-dropzone');
+        if (dropzone) {
+            dropzone.classList.remove('border-amber-400', 'bg-amber-950/40');
+        }
+        if (event.dataTransfer && event.dataTransfer.files) {
+            this.processUploadedFiles(event.dataTransfer.files);
+        }
+    },
+
+    // STORE MEDIA GALLERY PICKER CONTROLS
+    openStoreGalleryPicker() {
+        const modal = document.getElementById('admin-store-gallery-modal');
+        if (!modal) return;
+
+        this.selectedStoreGalleryImages = new Set();
+        this.renderStoreGalleryGrid();
+        modal.classList.remove('hidden');
+    },
+
+    closeStoreGalleryPicker() {
+        const modal = document.getElementById('admin-store-gallery-modal');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    renderStoreGalleryGrid() {
+        const grid = document.getElementById('store-gallery-grid');
+        const countSpan = document.getElementById('store-gallery-selected-count');
+        if (!grid) return;
+
+        const allImages = Store.getAllUploadedImages();
+
+        if (allImages.length === 0) {
+            grid.innerHTML = `<div class="col-span-4 p-8 text-center text-stone-400 text-xs">No media images found in store library.</div>`;
+            return;
+        }
+
+        if (countSpan) countSpan.textContent = `${this.selectedStoreGalleryImages.size} Image(s) Selected`;
+
+        grid.innerHTML = allImages.map((imgSrc, idx) => {
+            const isSelected = this.selectedStoreGalleryImages.has(imgSrc);
+            return `
+                <div onclick="App.toggleStoreGalleryImageSelection('${idx}')" class="relative group cursor-pointer rounded-xl overflow-hidden border-2 ${isSelected ? 'border-amber-400 ring-2 ring-amber-400/50 scale-95' : 'border-stone-800 hover:border-amber-500/50'} transition-all h-28 bg-stone-950">
+                    <img src="${imgSrc}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity">
+                        <div class="w-7 h-7 rounded-full ${isSelected ? 'bg-amber-400 text-stone-950 font-extrabold' : 'bg-stone-800 text-white'} flex items-center justify-center text-xs shadow">
+                            ${isSelected ? '✓' : '+'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    toggleStoreGalleryImageSelection(idxStr) {
+        const idx = parseInt(idxStr);
+        const allImages = Store.getAllUploadedImages();
+        const imgSrc = allImages[idx];
+        if (!imgSrc) return;
+
+        if (this.selectedStoreGalleryImages.has(imgSrc)) {
+            this.selectedStoreGalleryImages.delete(imgSrc);
+        } else {
+            this.selectedStoreGalleryImages.add(imgSrc);
+        }
+        this.renderStoreGalleryGrid();
+    },
+
+    addSelectedGalleryImagesToProduct() {
+        if (this.selectedStoreGalleryImages.size === 0) {
+            this.showToast('Please select at least one image from gallery.', 'error');
+            return;
+        }
+
+        let addedCount = 0;
+        this.selectedStoreGalleryImages.forEach(img => {
+            if (!this.activeEditGallery.includes(img)) {
+                this.activeEditGallery.push(img);
+                addedCount++;
+            }
+        });
+
+        this.closeStoreGalleryPicker();
+        this.renderEditProductGallery();
+        this.showToast(`🎉 ${addedCount} gallery image(s) added to product!`, 'success');
     },
 
     // Edit Existing Product Modal
@@ -3080,10 +3366,11 @@ const App = {
         document.getElementById('edit-prod-purity').value = product.purity || '22K Gold';
         document.getElementById('edit-prod-weight').value = product.weight || 0;
         document.getElementById('edit-prod-making').value = product.makingCharge || 0;
-        document.getElementById('edit-prod-image').value = product.image || '';
 
-        const preview = document.getElementById('edit-prod-img-preview');
-        if (preview) preview.src = product.image || '';
+        // Initialize active edit gallery array
+        this.activeEditGallery = (product.images && product.images.length > 0) ? [...product.images] : [product.image];
+        this.activeEditPrimary = 0;
+        this.renderEditProductGallery();
 
         const modal = document.getElementById('admin-edit-product-modal');
         if (modal) modal.classList.remove('hidden');
@@ -3102,7 +3389,8 @@ const App = {
 
         const purity = document.getElementById('edit-prod-purity').value;
         const purityCode = purity.includes('24') ? 'gold24k' : purity.includes('18') ? 'gold18k' : purity.includes('Silver') ? 'silver999' : 'gold22k';
-        const newImage = document.getElementById('edit-prod-image').value.trim();
+        
+        const primaryImage = (this.activeEditGallery && this.activeEditGallery.length > 0) ? (this.activeEditGallery[this.activeEditPrimary] || this.activeEditGallery[0]) : product.image;
 
         const updated = {
             ...product,
@@ -3112,12 +3400,17 @@ const App = {
             purityCode: purityCode,
             weight: parseFloat(document.getElementById('edit-prod-weight').value) || 0,
             makingCharge: parseFloat(document.getElementById('edit-prod-making').value) || 0,
-            image: newImage || product.image,
-            images: [newImage || product.image]
+            image: primaryImage,
+            images: this.activeEditGallery && this.activeEditGallery.length > 0 ? [...this.activeEditGallery] : [primaryImage]
         };
 
         Store.saveProduct(updated);
-        this.showToast('🎉 Catalogue Item & Photo updated successfully!', 'success');
+        // Save images to master store media gallery
+        if (this.activeEditGallery) {
+            this.activeEditGallery.forEach(img => Store.saveToCustomMediaGallery(img));
+        }
+
+        this.showToast('🎉 Catalogue Item & Photo Gallery updated successfully!', 'success');
         this.closeAdminEditProductModal();
         this.refreshCurrentView();
     },
