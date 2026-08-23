@@ -757,6 +757,225 @@ const Store = {
         const total = productReviews.reduce((sum, r) => sum + (r.rating || 5), 0);
         const avg = (total / productReviews.length).toFixed(1);
         return { avg: parseFloat(avg), count: productReviews.length };
+    },
+
+    // 🎟️ COUPONS & DISCOUNTS MANAGEMENT ENGINE
+    getCoupons() {
+        const initialCoupons = [
+            { id: 'CPN-1', code: 'FESTIVE5', type: 'percent', value: 5, minTotal: 25000, description: '5% Festive Offer Discount on orders above ₹25,000', active: true, expiry: '2026-12-31' },
+            { id: 'CPN-2', code: 'GOLD1000', type: 'flat', value: 1000, minTotal: 50000, description: 'Flat ₹1,000 OFF on Gold Jewellery purchases above ₹50,000', active: true, expiry: '2026-12-31' },
+            { id: 'CPN-3', code: 'SILVER500', type: 'flat', value: 500, minTotal: 10000, description: 'Flat ₹500 OFF on 925 Silver Ornaments above ₹10,000', active: true, expiry: '2026-12-31' },
+            { id: 'CPN-4', code: 'VINOD500', type: 'flat', value: 500, minTotal: 15000, description: 'Exclusive Owner Discount by Vinod Kumar Soni (₹500 OFF)', active: true, expiry: '2026-12-31' }
+        ];
+        return JSON.parse(localStorage.getItem('ksj_coupons')) || initialCoupons;
+    },
+
+    saveCoupon(couponData) {
+        let coupons = this.getCoupons();
+        if (couponData.id) {
+            const idx = coupons.findIndex(c => c.id === couponData.id);
+            if (idx !== -1) coupons[idx] = { ...coupons[idx], ...couponData };
+        } else {
+            const newCoupon = {
+                id: 'CPN-' + Date.now(),
+                code: couponData.code.trim().toUpperCase(),
+                type: couponData.type || 'flat',
+                value: parseFloat(couponData.value) || 0,
+                minTotal: parseFloat(couponData.minTotal) || 0,
+                description: couponData.description || 'Special Discount Coupon',
+                active: true,
+                expiry: couponData.expiry || '2026-12-31'
+            };
+            coupons.unshift(newCoupon);
+        }
+        localStorage.setItem('ksj_coupons', JSON.stringify(coupons));
+        window.dispatchEvent(new CustomEvent('ksj:coupons-updated'));
+        return { success: true, message: 'Coupon saved successfully!' };
+    },
+
+    deleteCoupon(couponId) {
+        let coupons = this.getCoupons().filter(c => c.id !== couponId);
+        localStorage.setItem('ksj_coupons', JSON.stringify(coupons));
+        window.dispatchEvent(new CustomEvent('ksj:coupons-updated'));
+        return { success: true, message: 'Coupon deleted.' };
+    },
+
+    validateCoupon(code, cartTotal) {
+        if (!code) return { valid: false, message: 'Please enter a coupon code.' };
+        const cleanCode = code.trim().toUpperCase();
+        const coupons = this.getCoupons();
+        const coupon = coupons.find(c => c.code === cleanCode && c.active);
+
+        if (!coupon) {
+            return { valid: false, message: 'Invalid or inactive coupon code.' };
+        }
+
+        if (coupon.expiry && new Date(coupon.expiry) < new Date()) {
+            return { valid: false, message: 'This coupon code has expired.' };
+        }
+
+        if (cartTotal < coupon.minTotal) {
+            return { valid: false, message: `Minimum cart total of ₹${coupon.minTotal.toLocaleString('en-IN')} required for coupon ${coupon.code}.` };
+        }
+
+        let discount = 0;
+        if (coupon.type === 'percent') {
+            discount = Math.round((cartTotal * coupon.value) / 100);
+        } else {
+            discount = coupon.value;
+        }
+
+        discount = Math.min(discount, cartTotal);
+        return {
+            valid: true,
+            coupon,
+            discount,
+            message: `🎉 Coupon ${coupon.code} applied! Saved ₹${discount.toLocaleString('en-IN')}.`
+        };
+    },
+
+    // 👥 CUSTOMER MANAGEMENT ENGINE
+    getCustomers() {
+        const orders = this.getOrderHistory();
+        const customerMap = {};
+
+        // Aggregate customer data from orders & saved profiles
+        orders.forEach(o => {
+            const phone = o.customerPhone || 'N/A';
+            if (!customerMap[phone]) {
+                customerMap[phone] = {
+                    name: o.customerName || 'Valued Customer',
+                    phone: phone,
+                    address: o.address || 'Jhunjhunu, Rajasthan',
+                    totalOrders: 0,
+                    totalSpent: 0,
+                    lastOrderDate: o.date,
+                    isBlocked: false
+                };
+            }
+            customerMap[phone].totalOrders += 1;
+            customerMap[phone].totalSpent += (o.total || 0);
+            if (new Date(o.date) > new Date(customerMap[phone].lastOrderDate)) {
+                customerMap[phone].lastOrderDate = o.date;
+            }
+        });
+
+        // Add saved customer profile if available
+        const savedProfile = this.getSavedCustomerProfile();
+        if (savedProfile && savedProfile.phone && !customerMap[savedProfile.phone]) {
+            customerMap[savedProfile.phone] = {
+                name: savedProfile.name || 'Registered Customer',
+                phone: savedProfile.phone,
+                address: 'Registered Online Customer',
+                totalOrders: 0,
+                totalSpent: 0,
+                lastOrderDate: new Date().toISOString(),
+                isBlocked: false
+            };
+        }
+
+        // Merge block status from localStorage
+        const blockedPhones = JSON.parse(localStorage.getItem('ksj_blocked_customers')) || [];
+        Object.keys(customerMap).forEach(p => {
+            if (blockedPhones.includes(p)) {
+                customerMap[p].isBlocked = true;
+            }
+        });
+
+        return Object.values(customerMap);
+    },
+
+    toggleCustomerBlockStatus(phone) {
+        let blockedPhones = JSON.parse(localStorage.getItem('ksj_blocked_customers')) || [];
+        if (blockedPhones.includes(phone)) {
+            blockedPhones = blockedPhones.filter(p => p !== phone);
+            this.addSecurityLog('CUSTOMER_UNBLOCKED', `Customer ${phone} was unblocked by Admin.`);
+        } else {
+            blockedPhones.push(phone);
+            this.addSecurityLog('CUSTOMER_BLOCKED', `Customer ${phone} was blocked by Admin.`);
+        }
+        localStorage.setItem('ksj_blocked_customers', JSON.stringify(blockedPhones));
+        window.dispatchEvent(new CustomEvent('ksj:customers-updated'));
+        return { success: true };
+    },
+
+    // 🏭 INVENTORY MANAGEMENT ENGINE
+    getInventoryStats() {
+        const products = this.getProducts();
+        const totalItems = products.length;
+        const lowStock = products.filter(p => (p.stockCount !== undefined ? p.stockCount <= 3 : false) || !p.inStock);
+        const outOfStock = products.filter(p => !p.inStock || p.stockCount === 0);
+
+        return {
+            totalItems,
+            lowStockCount: lowStock.length,
+            outOfStockCount: outOfStock.length,
+            items: products
+        };
+    },
+
+    updateProductStock(productId, stockCount, inStock) {
+        let products = this.getProducts();
+        const product = products.find(p => p.id === productId);
+        if (product) {
+            product.stockCount = parseInt(stockCount) || 0;
+            product.inStock = Boolean(inStock);
+            localStorage.setItem('ksj_products', JSON.stringify(products));
+            window.dispatchEvent(new CustomEvent('ksj:products-updated'));
+            return { success: true, message: `Stock for ${product.name} updated.` };
+        }
+        return { success: false, message: 'Product not found.' };
+    },
+
+    // 📈 SALES REPORTS ENGINE
+    getSalesReportStats() {
+        const orders = this.getOrderHistory();
+        let totalRevenue = 0;
+        let goldRevenue = 0;
+        let silverRevenue = 0;
+        let totalOrders = orders.length;
+        let deliveredOrders = 0;
+        let cancelledOrders = 0;
+        let totalMakingEarned = 0;
+        let totalGSTCollected = 0;
+
+        orders.forEach(o => {
+            if (o.orderStatus !== 'Cancelled') {
+                totalRevenue += (o.total || 0);
+                if (o.orderStatus === 'Delivered') deliveredOrders++;
+
+                // Breakdown items
+                if (o.items && Array.isArray(o.items)) {
+                    o.items.forEach(item => {
+                        const metalCost = item.metalCost || 0;
+                        const making = item.makingCharge || 0;
+                        totalMakingEarned += making;
+                        if ((item.purity || '').includes('Silver')) {
+                            silverRevenue += (item.totalPrice || 0);
+                        } else {
+                            goldRevenue += (item.totalPrice || 0);
+                        }
+                    });
+                }
+            } else {
+                cancelledOrders++;
+            }
+        });
+
+        // 3% GST Estimation
+        totalGSTCollected = Math.round(totalRevenue * 0.03);
+
+        return {
+            totalRevenue,
+            goldRevenue,
+            silverRevenue,
+            totalOrders,
+            deliveredOrders,
+            cancelledOrders,
+            totalMakingEarned,
+            totalGSTCollected,
+            recentSales: orders.slice(0, 10)
+        };
     }
 };
 

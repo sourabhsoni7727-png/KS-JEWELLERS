@@ -479,6 +479,68 @@
             </form>
         </div>
     </div>
+
+    <!-- ADMIN ADD COUPON MODAL -->
+    <div id="admin-add-coupon-modal" class="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-stone-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border-2 border-luxury-gold shadow-2xl relative space-y-4 max-h-[92vh] overflow-y-auto text-white">
+            <button onclick="App.closeAddCouponModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="border-b border-amber-500/30 pb-3">
+                <h3 class="font-serif-luxury text-xl font-bold text-gold-bright uppercase">🎟️ Create Discount Coupon</h3>
+                <p class="text-xs text-amber-200/70">Issue new promo codes and discount vouchers for customers.</p>
+            </div>
+
+            <form onsubmit="App.handleSaveCoupon(event)" class="space-y-3.5 text-xs">
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">Coupon Code</label>
+                    <input type="text" id="cpn-code" required placeholder="e.g. FESTIVE10" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-amber-300 font-mono font-bold uppercase">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Discount Type</label>
+                        <select id="cpn-type" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-bold">
+                            <option value="flat">Flat Amount (₹)</option>
+                            <option value="percent">Percentage (%)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Discount Value</label>
+                        <input type="number" step="0.1" id="cpn-value" required placeholder="e.g. 1000 or 5" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-bold">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Min Order Total (₹)</label>
+                        <input type="number" id="cpn-min-total" required value="10000" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-bold">
+                    </div>
+
+                    <div>
+                        <label class="block text-amber-300 font-bold mb-1">Expiry Date</label>
+                        <input type="date" id="cpn-expiry" required value="2026-12-31" class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-white font-bold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-amber-300 font-bold mb-1">Description / Banner Note</label>
+                    <input type="text" id="cpn-desc" placeholder="Special offer discount..." class="w-full px-3 py-2 bg-stone-950 border border-amber-500/40 rounded-xl text-stone-300 font-semibold">
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button type="submit" class="flex-1 py-3 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg border border-amber-300">
+                        🎟️ Save & Activate Coupon
+                    </button>
+                    <button type="button" onclick="App.closeAddCouponModal()" class="px-5 py-3 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold text-xs rounded-xl border border-stone-600">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- ADMIN EDIT ORDER MODAL -->
     <div id="admin-edit-order-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
         <div class="bg-stone-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border-2 border-luxury-gold shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">

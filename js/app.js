@@ -1501,37 +1501,42 @@ const App = {
             `;
         }
 
+        const activeTab = this.adminTab || 'dashboard';
         const rates = Store.getRates();
         const products = Store.getProducts();
         const orders = Store.getOrders();
         const orderHistory = Store.getOrderHistory();
+        const customers = Store.getCustomers();
+        const inventoryStats = Store.getInventoryStats();
+        const coupons = Store.getCoupons();
+        const salesStats = Store.getSalesReportStats();
         const securityLogs = Store.getSecurityLogs();
         const lockoutInfo = Store.getAdminLockoutInfo();
         const currentDeviceId = Store.getDeviceId();
 
         // Calculate Analytics Counters
-        const totalSales = orders.reduce((sum, o) => sum + o.total, 0);
+        const totalSales = orders.reduce((sum, o) => sum + (o.total || 0), 0);
         const totalProductsSold = orders.reduce((sum, o) => sum + (o.items ? o.items.reduce((s, i) => s + (i.qty || 1), 0) : 0), 0);
         const uniqueCustomerPhones = new Set(orders.map(o => o.customerPhone || o.customerName));
         const totalCustomersCount = uniqueCustomerPhones.size;
 
         return `
-            <section class="py-10 bg-stone-900 text-white min-h-screen">
+            <section class="py-8 sm:py-10 bg-stone-900 text-white min-h-screen">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     
                     <!-- Top Bar & Security Device Status -->
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-6 border-b border-stone-800">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-6 border-b border-stone-800">
                         <div>
                             <div class="flex items-center gap-2 mb-1">
-                                <span class="text-[10px] uppercase font-bold tracking-widest text-amber-400">KS Jewellers Admin Control Panel</span>
+                                <span class="text-[10px] uppercase font-bold tracking-widest text-amber-400">KS JEWELLERS MASTER CONTROL PORTAL</span>
                                 <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                                     🔒 Single Device Lock Active
                                 </span>
                             </div>
-                            <h1 class="font-serif-luxury text-3xl font-bold text-white">Master Store & Analytics Dashboard</h1>
-                            <p class="text-xs text-stone-400 mt-0.5">Bound Device ID: <span class="font-mono text-amber-300">${currentDeviceId}</span></p>
+                            <h1 class="font-serif-luxury text-2xl sm:text-3xl font-bold text-white">Master Admin & Management Portal</h1>
+                            <p class="text-xs text-stone-400 mt-0.5">Authorized Device: <span class="font-mono text-amber-300">${currentDeviceId}</span></p>
                         </div>
-                        <div class="flex items-center gap-2.5">
+                        <div class="flex items-center gap-2.5 flex-wrap">
                             <button onclick="App.openAdminPasswordResetModal()" class="px-3 py-1.5 bg-amber-950/90 hover:bg-amber-900 text-amber-300 text-xs font-bold rounded-lg border border-amber-500/40 flex items-center gap-1.5 shadow">
                                 <i data-lucide="key-round" class="w-3.5 h-3.5 text-amber-400"></i> Change Password
                             </button>
@@ -1547,252 +1552,541 @@ const App = {
                         </div>
                     </div>
 
-                    <!-- 4 ANALYTICS STATS OVERVIEW CARDS -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-                        
-                        <!-- Total Sales Revenue -->
-                        <div class="bg-stone-800 p-6 rounded-2xl border border-amber-500/30 relative overflow-hidden shadow-xl">
-                            <span class="text-[11px] text-amber-400/90 uppercase font-bold tracking-wider">Total Sales Revenue</span>
-                            <span class="block text-2xl font-bold font-serif-luxury text-amber-300 mt-1">₹${totalSales.toLocaleString('en-IN')}</span>
-                            <span class="text-[10px] text-stone-400 mt-1 block">From ${orders.length} Verified Orders</span>
-                        </div>
+                    <!-- 👑 7 CORE ADMIN MODULE TABS NAVIGATION BAR -->
+                    <div class="flex items-center gap-2 overflow-x-auto pb-3 mb-8 border-b border-stone-800 scrollbar-none">
+                        <button onclick="App.setAdminTab('dashboard')" class="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shrink-0 ${activeTab === 'dashboard' ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 shadow-lg border border-amber-300' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                            <span>📊 Dashboard</span>
+                        </button>
 
-                        <!-- Total Products Sold -->
-                        <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700 shadow-xl">
-                            <span class="text-[11px] text-stone-400 uppercase font-bold tracking-wider">Total Products Sold</span>
-                            <span class="block text-2xl font-bold font-serif-luxury text-white mt-1">${totalProductsSold} Units</span>
-                            <span class="text-[10px] text-emerald-400 mt-1 block font-semibold">✓ Shipped & Delivered Items</span>
-                        </div>
+                        <button onclick="App.setAdminTab('products')" class="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shrink-0 ${activeTab === 'products' ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 shadow-lg border border-amber-300' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}">
+                            <i data-lucide="gem" class="w-4 h-4"></i>
+                            <span>💎 Product Management (${products.length})</span>
+                        </button>
 
-                        <!-- Total Customers Connected -->
-                        <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700 shadow-xl">
-                            <span class="text-[11px] text-stone-400 uppercase font-bold tracking-wider">Total Active Customers</span>
-                            <span class="block text-2xl font-bold font-serif-luxury text-white mt-1">${totalCustomersCount} Patrons</span>
-                            <span class="text-[10px] text-stone-400 mt-1 block">Registered & Buying Customers</span>
-                        </div>
+                        <button onclick="App.setAdminTab('orders')" class="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shrink-0 ${activeTab === 'orders' ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 shadow-lg border border-amber-300' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}">
+                            <i data-lucide="package" class="w-4 h-4"></i>
+                            <span>📦 Order Management (${orders.length})</span>
+                        </button>
 
-                        <!-- Single Device Lock Status -->
-                        <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700 shadow-xl">
-                            <span class="text-[11px] text-stone-400 uppercase font-bold tracking-wider">Single Device Session</span>
-                            <span class="block text-xl font-bold font-serif-luxury text-emerald-400 mt-1">Locked to This Device</span>
-                            <span class="text-[10px] text-stone-400 mt-1 block">5 Failed Attempts $\\rightarrow$ 72h Gap</span>
-                        </div>
+                        <button onclick="App.setAdminTab('customers')" class="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shrink-0 ${activeTab === 'customers' ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 shadow-lg border border-amber-300' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}">
+                            <i data-lucide="users" class="w-4 h-4"></i>
+                            <span>👥 Customer Management (${customers.length})</span>
+                        </button>
 
+                        <button onclick="App.setAdminTab('inventory')" class="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shrink-0 ${activeTab === 'inventory' ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 shadow-lg border border-amber-300' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}">
+                            <i data-lucide="warehouse" class="w-4 h-4"></i>
+                            <span>🏭 Inventory Management (${inventoryStats.lowStockCount > 0 ? `⚠️ ${inventoryStats.lowStockCount} Low` : 'OK'})</span>
+                        </button>
+
+                        <button onclick="App.setAdminTab('coupons')" class="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shrink-0 ${activeTab === 'coupons' ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 shadow-lg border border-amber-300' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}">
+                            <i data-lucide="ticket" class="w-4 h-4"></i>
+                            <span>🎟️ Coupons & Discounts (${coupons.length})</span>
+                        </button>
+
+                        <button onclick="App.setAdminTab('reports')" class="px-4 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shrink-0 ${activeTab === 'reports' ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 text-stone-950 shadow-lg border border-amber-300' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                            <span>📈 Sales Reports</span>
+                        </button>
                     </div>
 
-                    <!-- LIVE RATES MANAGER (FULL MANUAL OVERRIDE CONTROL) -->
-                    <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-amber-500/30 mb-10 space-y-6 shadow-xl">
-                        <div class="flex justify-between items-center border-b border-stone-700 pb-4">
-                            <div>
-                                <h2 class="font-serif-luxury text-xl font-bold text-amber-200">Live Bullion Rate Override</h2>
-                                <p class="text-xs text-stone-400">Update daily market prices for 24K, 22K, 18K Gold & 999 Silver. Product prices update instantly.</p>
+                    <!-- MODULE 0: 📊 ADMIN DASHBOARD OVERVIEW -->
+                    ${activeTab === 'dashboard' ? `
+                        <!-- 4 ANALYTICS STATS OVERVIEW CARDS -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                            
+                            <div class="bg-stone-800 p-6 rounded-2xl border border-amber-500/30 relative overflow-hidden shadow-xl">
+                                <span class="text-[11px] text-amber-400/90 uppercase font-bold tracking-wider">Total Sales Revenue</span>
+                                <span class="block text-2xl font-bold font-serif-luxury text-amber-300 mt-1">₹${totalSales.toLocaleString('en-IN')}</span>
+                                <span class="text-[10px] text-stone-400 mt-1 block">From ${orders.length} Verified Orders</span>
                             </div>
-                            <span class="px-3 py-1 rounded-full text-xs font-bold ${rates.isManualOverride ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'}">
-                                ${rates.isManualOverride ? 'Manual Override Locked' : 'Auto Live Market Simulation'}
-                            </span>
+
+                            <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700 shadow-xl">
+                                <span class="text-[11px] text-stone-400 uppercase font-bold tracking-wider">Total Products Sold</span>
+                                <span class="block text-2xl font-bold font-serif-luxury text-white mt-1">${totalProductsSold} Units</span>
+                                <span class="text-[10px] text-emerald-400 mt-1 block font-semibold">✓ Shipped & Delivered Items</span>
+                            </div>
+
+                            <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700 shadow-xl">
+                                <span class="text-[11px] text-stone-400 uppercase font-bold tracking-wider">Total Active Customers</span>
+                                <span class="block text-2xl font-bold font-serif-luxury text-white mt-1">${totalCustomersCount} Patrons</span>
+                                <span class="text-[10px] text-stone-400 mt-1 block">Registered & Buying Customers</span>
+                            </div>
+
+                            <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700 shadow-xl">
+                                <span class="text-[11px] text-stone-400 uppercase font-bold tracking-wider">Single Device Session</span>
+                                <span class="block text-xl font-bold font-serif-luxury text-emerald-400 mt-1">Locked to This Device</span>
+                                <span class="text-[10px] text-stone-400 mt-1 block">5 Failed Attempts $\\rightarrow$ 72h Lockout</span>
+                            </div>
+
                         </div>
 
-                        <form onsubmit="App.handleAdminRatesUpdate(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 text-xs">
-                            <div>
-                                <label class="block text-stone-300 font-semibold mb-1">24K Gold (₹/g)</label>
-                                <input type="number" id="admin-rate-24k" value="${rates.gold24k}" required class="w-full px-2.5 py-2 bg-stone-900 border border-stone-700 rounded-lg text-white font-bold">
+                        <!-- LIVE BULLION RATE OVERRIDE -->
+                        <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-amber-500/30 mb-10 space-y-6 shadow-xl">
+                            <div class="flex justify-between items-center border-b border-stone-700 pb-4">
+                                <div>
+                                    <h2 class="font-serif-luxury text-xl font-bold text-amber-200">Live Bullion Rate Override</h2>
+                                    <p class="text-xs text-stone-400">Update daily market prices for 24K, 22K, 18K Gold & 999 Silver. Product prices update instantly.</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold ${rates.isManualOverride ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'}">
+                                    ${rates.isManualOverride ? 'Manual Override Locked' : 'Auto Live Market Simulation'}
+                                </span>
                             </div>
-                            <div>
-                                <label class="block text-stone-300 font-semibold mb-1">22K Gold (₹/g)</label>
-                                <input type="number" id="admin-rate-22k" value="${rates.gold22k}" required class="w-full px-2.5 py-2 bg-stone-900 border border-stone-700 rounded-lg text-white font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-stone-300 font-semibold mb-1">18K Gold (₹/g)</label>
-                                <input type="number" id="admin-rate-18k" value="${rates.gold18k}" required class="w-full px-2.5 py-2 bg-stone-900 border border-stone-700 rounded-lg text-white font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-stone-300 font-semibold mb-1">999 Silver (₹/g)</label>
-                                <input type="number" step="any" id="admin-rate-silver" value="${rates.silver999}" required class="w-full px-2.5 py-2 bg-stone-900 border border-stone-700 rounded-lg text-white font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-amber-300 font-semibold mb-1">Gold Making (%)</label>
-                                <input type="number" step="0.1" id="admin-rate-making" value="${rates.defaultMakingPercent !== undefined ? rates.defaultMakingPercent : 10}" required class="w-full px-2.5 py-2 bg-stone-900 border border-amber-500/50 rounded-lg text-amber-300 font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-amber-300 font-semibold mb-1">Silver Making (₹/g)</label>
-                                <input type="number" step="0.1" id="admin-rate-silver-making" value="${rates.silverMakingPerGram !== undefined ? rates.silverMakingPerGram : 30}" required class="w-full px-2.5 py-2 bg-stone-900 border border-amber-500/50 rounded-lg text-amber-300 font-bold">
-                            </div>
-                            <div>
-                                <label class="block text-amber-300 font-semibold mb-1">GST Rate (%)</label>
-                                <input type="number" step="0.1" id="admin-rate-gst" value="${rates.gstPercent !== undefined ? rates.gstPercent : 3}" required class="w-full px-2.5 py-2 bg-stone-900 border border-amber-500/50 rounded-lg text-amber-300 font-bold">
-                            </div>
-                            <div class="sm:col-span-2 lg:col-span-7 flex gap-4 pt-2">
-                                <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold rounded-lg transition-colors shadow">
-                                    Save & Lock Market Rates
-                                </button>
-                                <button type="button" onclick="App.toggleAutoRateSimulation()" class="px-6 py-2.5 bg-stone-700 hover:bg-stone-600 text-stone-200 font-semibold rounded-lg">
-                                    ${rates.isManualOverride ? 'Switch to Auto Live Rate Ticker' : 'Lock Manual Rates'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
 
-                    <!-- CUSTOMER ORDERS & DETAILED PURCHASE RECORDS -->
-                    <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 mb-10 space-y-6 shadow-xl">
-                        <div class="flex justify-between items-center border-b border-stone-700 pb-4">
-                            <div>
-                                <h2 class="font-serif-luxury text-xl font-bold text-white">Customer Orders & Full Purchase Details</h2>
-                                <p class="text-xs text-stone-400">Click any customer order to view purchase details, print tax invoice, or edit/delete order.</p>
-                            </div>
-                            <span class="text-xs text-amber-300 font-semibold bg-stone-900 px-3 py-1 rounded-lg border border-stone-700">
-                                Active Orders: ${orders.length}
-                            </span>
+                            <form onsubmit="App.handleAdminRatesUpdate(event)" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 text-xs">
+                                <div>
+                                    <label class="block text-stone-300 font-semibold mb-1">24K Gold (₹/g)</label>
+                                    <input type="number" id="admin-rate-24k" value="${rates.gold24k}" required class="w-full px-2.5 py-2 bg-stone-900 border border-stone-700 rounded-lg text-white font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-stone-300 font-semibold mb-1">22K Gold (₹/g)</label>
+                                    <input type="number" id="admin-rate-22k" value="${rates.gold22k}" required class="w-full px-2.5 py-2 bg-stone-900 border border-stone-700 rounded-lg text-white font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-stone-300 font-semibold mb-1">18K Gold (₹/g)</label>
+                                    <input type="number" id="admin-rate-18k" value="${rates.gold18k}" required class="w-full px-2.5 py-2 bg-stone-900 border border-stone-700 rounded-lg text-white font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-stone-300 font-semibold mb-1">999 Silver (₹/g)</label>
+                                    <input type="number" step="any" id="admin-rate-silver" value="${rates.silver999}" required class="w-full px-2.5 py-2 bg-stone-900 border border-stone-700 rounded-lg text-white font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-amber-300 font-semibold mb-1">Gold Making (%)</label>
+                                    <input type="number" step="0.1" id="admin-rate-making" value="${rates.defaultMakingPercent !== undefined ? rates.defaultMakingPercent : 10}" required class="w-full px-2.5 py-2 bg-stone-900 border border-amber-500/50 rounded-lg text-amber-300 font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-amber-300 font-semibold mb-1">Silver Making (₹/g)</label>
+                                    <input type="number" step="0.1" id="admin-rate-silver-making" value="${rates.silverMakingPerGram !== undefined ? rates.silverMakingPerGram : 30}" required class="w-full px-2.5 py-2 bg-stone-900 border border-amber-500/50 rounded-lg text-amber-300 font-bold">
+                                </div>
+                                <div>
+                                    <label class="block text-amber-300 font-semibold mb-1">GST Rate (%)</label>
+                                    <input type="number" step="0.1" id="admin-rate-gst" value="${rates.gstPercent !== undefined ? rates.gstPercent : 3}" required class="w-full px-2.5 py-2 bg-stone-900 border border-amber-500/50 rounded-lg text-amber-300 font-bold">
+                                </div>
+                                <div class="sm:col-span-2 lg:col-span-7 flex gap-4 pt-2">
+                                    <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-bold rounded-lg transition-colors shadow">
+                                        Save & Lock Market Rates
+                                    </button>
+                                    <button type="button" onclick="App.toggleAutoRateSimulation()" class="px-6 py-2.5 bg-stone-700 hover:bg-stone-600 text-stone-200 font-semibold rounded-lg">
+                                        ${rates.isManualOverride ? 'Switch to Auto Live Rate Ticker' : 'Lock Manual Rates'}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                        
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs">
-                                <thead>
-                                    <tr class="border-b border-stone-700 text-stone-400 uppercase font-semibold">
-                                        <th class="py-3 px-3">Order ID</th>
-                                        <th class="py-3 px-3">Customer Name</th>
-                                        <th class="py-3 px-3">Phone & Address</th>
-                                        <th class="py-3 px-3">Total Payable</th>
-                                        <th class="py-3 px-3">Payment</th>
-                                        <th class="py-3 px-3">Order Status</th>
-                                        <th class="py-3 px-3">Admin Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${orders.map(o => `
-                                        <tr class="border-b border-stone-700/60 hover:bg-stone-700/30">
-                                            <td class="py-3 px-3 font-bold text-amber-300">${o.id}</td>
-                                            <td class="py-3 px-3 font-semibold text-white">${o.customerName}</td>
-                                            <td class="py-3 px-3">${o.customerPhone}<br><span class="text-[10px] text-stone-400 line-clamp-1">${o.address}</span></td>
-                                            <td class="py-3 px-3 font-bold text-amber-300">₹${o.total.toLocaleString('en-IN')}</td>
-                                            <td class="py-3 px-3"><span class="px-2 py-0.5 rounded bg-stone-900 border border-stone-700">${o.paymentMethod}</span></td>
-                                            <td class="py-3 px-3">
-                                                <select onchange="Store.updateOrderStatus('${o.id}', this.value)" class="bg-stone-900 border border-stone-700 text-amber-300 font-bold rounded px-2 py-1">
-                                                    <option value="Placed" ${o.orderStatus === 'Placed' ? 'selected' : ''}>Placed</option>
-                                                    <option value="Processing" ${o.orderStatus === 'Processing' ? 'selected' : ''}>Processing</option>
-                                                    <option value="Shipped" ${o.orderStatus === 'Shipped' ? 'selected' : ''}>Shipped</option>
-                                                    <option value="Delivered" ${o.orderStatus === 'Delivered' ? 'selected' : ''}>Delivered</option>
-                                                    <option value="Cancelled" ${o.orderStatus === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-                                                </select>
-                                            </td>
-                                            <td class="py-3 px-3">
-                                                <div class="flex items-center gap-1.5">
-                                                    <button onclick="App.viewCustomerOrderModal('${o.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-[11px] rounded transition-colors shadow">
-                                                        View Info
+                    ` : ''}
+
+                    <!-- MODULE 1: 💎 PRODUCT MANAGEMENT -->
+                    ${activeTab === 'products' ? `
+                        <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 space-y-6 shadow-xl">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-stone-700 pb-4">
+                                <div>
+                                    <h2 class="font-serif-luxury text-xl font-bold text-white">💎 Product Catalogue & Inventory Manager</h2>
+                                    <p class="text-xs text-stone-400">Add new jewellery items, update weights, making charges, change product photos, or delete products.</p>
+                                </div>
+                                <button onclick="App.openAddProductModal()" class="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow-lg border border-amber-300">
+                                    <i data-lucide="plus" class="w-4 h-4"></i> Add New Jewellery Item
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                ${products.map(p => `
+                                    <div class="bg-stone-900 p-4 rounded-2xl border border-stone-700 flex gap-3.5 items-center justify-between shadow-md">
+                                        <img src="${p.image}" class="w-16 h-16 rounded-xl object-cover border border-amber-500/40 shrink-0">
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="font-bold text-white text-xs truncate">${p.name}</h4>
+                                            <span class="text-[10px] text-stone-400">${p.purity} | ${p.weight}g</span>
+                                            <span class="block text-xs font-bold text-amber-300">₹${Store.calculateProductPrice(p).toLocaleString('en-IN')}</span>
+                                        </div>
+                                        <div class="flex flex-col gap-1.5 shrink-0">
+                                            <button onclick="App.openEditProductModal('${p.id}')" class="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-[11px] rounded-lg border border-amber-500/40" title="Edit product details & photo">
+                                                ✏️ Edit
+                                            </button>
+                                            <button onclick="App.downloadProductImage('${p.image}', '${encodeURIComponent(p.name)}')" class="px-2.5 py-1 bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-[11px] rounded-lg border border-amber-500/40" title="Download Product Photo">
+                                                📥 Photo
+                                            </button>
+                                            <button onclick="Store.deleteProduct('${p.id}')" class="px-2.5 py-1 bg-red-950 hover:bg-red-900 text-red-300 font-bold text-[11px] rounded-lg border border-red-800" title="Delete product">
+                                                🗑️ Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- MODULE 2: 📦 ORDER MANAGEMENT -->
+                    ${activeTab === 'orders' ? `
+                        <!-- CUSTOMER ORDERS & DETAILED PURCHASE RECORDS -->
+                        <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 mb-10 space-y-6 shadow-xl">
+                            <div class="flex justify-between items-center border-b border-stone-700 pb-4">
+                                <div>
+                                    <h2 class="font-serif-luxury text-xl font-bold text-white">📦 Active Customer Orders</h2>
+                                    <p class="text-xs text-stone-400">Click any customer order to view purchase details, print tax invoice, change status, or edit/delete order.</p>
+                                </div>
+                                <span class="text-xs text-amber-300 font-bold bg-stone-900 px-3.5 py-1.5 rounded-lg border border-stone-700">
+                                    Active Orders: ${orders.length}
+                                </span>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="border-b border-stone-700 text-stone-400 uppercase font-semibold">
+                                            <th class="py-3 px-3">Order ID</th>
+                                            <th class="py-3 px-3">Customer Name</th>
+                                            <th class="py-3 px-3">Phone & Address</th>
+                                            <th class="py-3 px-3">Total Payable</th>
+                                            <th class="py-3 px-3">Payment</th>
+                                            <th class="py-3 px-3">Order Status</th>
+                                            <th class="py-3 px-3">Admin Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${orders.map(o => `
+                                            <tr class="border-b border-stone-700/60 hover:bg-stone-700/30">
+                                                <td class="py-3 px-3 font-bold text-amber-300">${o.id}</td>
+                                                <td class="py-3 px-3 font-semibold text-white">${o.customerName}</td>
+                                                <td class="py-3 px-3">${o.customerPhone}<br><span class="text-[10px] text-stone-400 line-clamp-1">${o.address}</span></td>
+                                                <td class="py-3 px-3 font-bold text-amber-300">₹${(o.total || 0).toLocaleString('en-IN')}</td>
+                                                <td class="py-3 px-3"><span class="px-2 py-0.5 rounded bg-stone-900 border border-stone-700">${o.paymentMethod}</span></td>
+                                                <td class="py-3 px-3">
+                                                    <select onchange="Store.updateOrderStatus('${o.id}', this.value)" class="bg-stone-900 border border-stone-700 text-amber-300 font-bold rounded px-2 py-1">
+                                                        <option value="Placed" ${o.orderStatus === 'Placed' ? 'selected' : ''}>Placed</option>
+                                                        <option value="Processing" ${o.orderStatus === 'Processing' ? 'selected' : ''}>Processing</option>
+                                                        <option value="Shipped" ${o.orderStatus === 'Shipped' ? 'selected' : ''}>Shipped</option>
+                                                        <option value="Delivered" ${o.orderStatus === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                                                        <option value="Cancelled" ${o.orderStatus === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                                                    </select>
+                                                </td>
+                                                <td class="py-3 px-3">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <button onclick="App.viewCustomerOrderModal('${o.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-[11px] rounded transition-colors shadow">
+                                                            View Info
+                                                        </button>
+                                                        <button onclick="App.openAdminEditOrderModal('${o.id}', false)" class="px-2 py-1 bg-stone-700 hover:bg-stone-600 text-amber-300 font-bold text-[11px] rounded border border-amber-500/40" title="Edit Order Details">
+                                                            ✏️ Edit
+                                                        </button>
+                                                        <button onclick="App.handleAdminDeleteOrder('${o.id}')" class="px-2 py-1 bg-red-950 hover:bg-red-900 text-red-300 font-bold text-[11px] rounded border border-red-800" title="Delete Order">
+                                                            🗑️ Delete
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 📜 COMPLETE ORDER HISTORY ARCHIVES SECTION -->
+                        <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-amber-500/30 mb-10 space-y-6 shadow-xl">
+                            <div class="flex justify-between items-center border-b border-stone-700 pb-4">
+                                <div>
+                                    <h2 class="font-serif-luxury text-xl font-bold text-amber-200">📜 Complete Order History Archives</h2>
+                                    <p class="text-xs text-stone-400">Archived historic records of all customer orders. Admin can view, edit, or delete any history record.</p>
+                                </div>
+                                <span class="text-xs text-amber-300 font-bold bg-stone-900 px-3.5 py-1.5 rounded-lg border border-amber-500/40">
+                                    History Records: ${orderHistory.length}
+                                </span>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="border-b border-stone-700 text-stone-400 uppercase font-semibold">
+                                            <th class="py-3 px-3">Order ID</th>
+                                            <th class="py-3 px-3">Date</th>
+                                            <th class="py-3 px-3">Customer</th>
+                                            <th class="py-3 px-3">Phone & Address</th>
+                                            <th class="py-3 px-3">Total Payable</th>
+                                            <th class="py-3 px-3">Payment</th>
+                                            <th class="py-3 px-3">Status</th>
+                                            <th class="py-3 px-3">History Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${orderHistory.length > 0 ? orderHistory.map(h => `
+                                            <tr class="border-b border-stone-700/60 hover:bg-stone-700/30">
+                                                <td class="py-3 px-3 font-bold text-amber-300">${h.id}</td>
+                                                <td class="py-3 px-3 text-[11px] text-stone-400">${new Date(h.date || Date.now()).toLocaleDateString('en-IN')}</td>
+                                                <td class="py-3 px-3 font-semibold text-white">${h.customerName}</td>
+                                                <td class="py-3 px-3">${h.customerPhone || 'N/A'}<br><span class="text-[10px] text-stone-400 line-clamp-1">${h.address || 'N/A'}</span></td>
+                                                <td class="py-3 px-3 font-bold text-amber-300">₹${(h.total || 0).toLocaleString('en-IN')}</td>
+                                                <td class="py-3 px-3"><span class="px-2 py-0.5 rounded bg-stone-900 border border-stone-700 text-[10px]">${h.paymentMethod || 'COD'}</span></td>
+                                                <td class="py-3 px-3">
+                                                    <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${h.orderStatus === 'Delivered' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : h.orderStatus === 'Cancelled' ? 'bg-red-950 text-red-300 border border-red-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">
+                                                        ${h.orderStatus}
+                                                    </span>
+                                                </td>
+                                                <td class="py-3 px-3">
+                                                    <div class="flex items-center gap-1.5">
+                                                        <button onclick="App.viewCustomerOrderModal('${h.id}')" class="px-2 py-1 bg-stone-900 hover:bg-stone-950 text-amber-300 font-bold text-[10px] rounded border border-amber-500/40">
+                                                            Tax Invoice
+                                                        </button>
+                                                        <button onclick="App.openAdminEditOrderModal('${h.id}', true)" class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-[10px] rounded shadow">
+                                                            ✏️ Edit Record
+                                                        </button>
+                                                        <button onclick="App.handleAdminDeleteHistoryOrder('${h.id}')" class="px-2 py-1 bg-red-950 hover:bg-red-900 text-red-300 font-bold text-[10px] rounded border border-red-800">
+                                                            🗑️ Delete Record
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        `).join('') : `
+                                            <tr>
+                                                <td colspan="8" class="py-8 text-center text-stone-400">No order history records found.</td>
+                                            </tr>
+                                        `}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- MODULE 3: 👥 CUSTOMER MANAGEMENT -->
+                    ${activeTab === 'customers' ? `
+                        <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 space-y-6 shadow-xl">
+                            <div class="flex justify-between items-center border-b border-stone-700 pb-4">
+                                <div>
+                                    <h2 class="font-serif-luxury text-xl font-bold text-white">👥 Customer Directory & Account Management</h2>
+                                    <p class="text-xs text-stone-400">View registered customers, purchase totals, order history counts, and manage account block status.</p>
+                                </div>
+                                <span class="text-xs text-amber-300 font-bold bg-stone-900 px-3.5 py-1.5 rounded-lg border border-stone-700">
+                                    Total Customers: ${customers.length}
+                                </span>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="border-b border-stone-700 text-stone-400 uppercase font-semibold">
+                                            <th class="py-3 px-3">Customer Name</th>
+                                            <th class="py-3 px-3">Mobile Number</th>
+                                            <th class="py-3 px-3">Delivery Address</th>
+                                            <th class="py-3 px-3">Total Orders</th>
+                                            <th class="py-3 px-3">Total Spent (₹)</th>
+                                            <th class="py-3 px-3">Account Status</th>
+                                            <th class="py-3 px-3">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-stone-700/60">
+                                        ${customers.map(c => `
+                                            <tr class="hover:bg-stone-700/30">
+                                                <td class="py-3 px-3 font-bold text-white">${c.name}</td>
+                                                <td class="py-3 px-3 font-mono text-amber-300 font-bold">${c.phone}</td>
+                                                <td class="py-3 px-3 text-stone-300"><span class="line-clamp-1 text-[11px]">${c.address}</span></td>
+                                                <td class="py-3 px-3 font-bold text-amber-200">${c.totalOrders} Orders</td>
+                                                <td class="py-3 px-3 font-bold text-emerald-400">₹${c.totalSpent.toLocaleString('en-IN')}</td>
+                                                <td class="py-3 px-3">
+                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${c.isBlocked ? 'bg-red-950 text-red-300 border border-red-800' : 'bg-emerald-950 text-emerald-300 border border-emerald-800'}">
+                                                        ${c.isBlocked ? '🚫 Blocked' : '✅ Active Patron'}
+                                                    </span>
+                                                </td>
+                                                <td class="py-3 px-3">
+                                                    <button onclick="App.handleToggleCustomerBlock('${c.phone}')" class="px-3 py-1 text-[11px] font-bold rounded-lg shadow transition-colors ${c.isBlocked ? 'bg-emerald-600 hover:bg-emerald-500 text-stone-950' : 'bg-red-950 hover:bg-red-900 text-red-200 border border-red-800'}">
+                                                        ${c.isBlocked ? '✅ Unblock Account' : '🚫 Block Account'}
                                                     </button>
-                                                    <button onclick="App.openAdminEditOrderModal('${o.id}', false)" class="px-2 py-1 bg-stone-700 hover:bg-stone-600 text-amber-300 font-bold text-[11px] rounded transition-colors border border-amber-500/40" title="Edit Order Details">
-                                                        ✏️ Edit
-                                                    </button>
-                                                    <button onclick="App.handleAdminDeleteOrder('${o.id}')" class="px-2 py-1 bg-red-950 hover:bg-red-900 text-red-300 font-bold text-[11px] rounded transition-colors border border-red-800" title="Delete Order">
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- MODULE 4: 🏭 INVENTORY MANAGEMENT -->
+                    ${activeTab === 'inventory' ? `
+                        <div class="space-y-6">
+                            <!-- Stock Overview Cards -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                <div class="bg-stone-800 p-5 rounded-2xl border border-stone-700">
+                                    <span class="text-[11px] text-stone-400 uppercase font-bold tracking-wider">Total Catalogue Items</span>
+                                    <span class="block text-2xl font-bold font-serif-luxury text-white mt-1">${inventoryStats.totalItems} Items</span>
+                                </div>
+                                <div class="bg-stone-800 p-5 rounded-2xl border border-amber-500/40">
+                                    <span class="text-[11px] text-amber-400 uppercase font-bold tracking-wider">Low Stock Warnings (&le; 3 units)</span>
+                                    <span class="block text-2xl font-bold font-serif-luxury text-amber-300 mt-1">${inventoryStats.lowStockCount} Items</span>
+                                </div>
+                                <div class="bg-stone-800 p-5 rounded-2xl border border-red-500/40">
+                                    <span class="text-[11px] text-red-400 uppercase font-bold tracking-wider">Out of Stock Items</span>
+                                    <span class="block text-2xl font-bold font-serif-luxury text-red-300 mt-1">${inventoryStats.outOfStockCount} Items</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 space-y-6 shadow-xl">
+                                <div class="border-b border-stone-700 pb-4">
+                                    <h2 class="font-serif-luxury text-xl font-bold text-white">🏭 Stock Count & Availability Control</h2>
+                                    <p class="text-xs text-stone-400">Update stock units and toggle in-stock / out-of-stock badges per ornament.</p>
+                                </div>
+
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-xs">
+                                        <thead>
+                                            <tr class="border-b border-stone-700 text-stone-400 uppercase font-semibold">
+                                                <th class="py-3 px-3">Item</th>
+                                                <th class="py-3 px-3">Category</th>
+                                                <th class="py-3 px-3">Purity</th>
+                                                <th class="py-3 px-3">Stock Units</th>
+                                                <th class="py-3 px-3">Availability</th>
+                                                <th class="py-3 px-3">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-stone-700/60">
+                                            ${inventoryStats.items.map(p => `
+                                                <tr class="hover:bg-stone-700/30">
+                                                    <td class="py-3 px-3 flex items-center gap-3">
+                                                        <img src="${p.image}" class="w-10 h-10 rounded-lg object-cover border border-amber-500/30">
+                                                        <div>
+                                                            <span class="font-bold text-white block">${p.name}</span>
+                                                            <span class="text-[10px] text-stone-400">ID: ${p.id}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-3 px-3 text-stone-300 uppercase text-[10px] font-bold">${p.category}</td>
+                                                    <td class="py-3 px-3 text-amber-300 font-bold">${p.purity}</td>
+                                                    <td class="py-3 px-3">
+                                                        <input type="number" id="stock-count-${p.id}" value="${p.stockCount !== undefined ? p.stockCount : 10}" class="w-20 px-2.5 py-1 bg-stone-900 border border-stone-700 rounded-lg text-white font-bold font-mono">
+                                                    </td>
+                                                    <td class="py-3 px-3">
+                                                        <label class="flex items-center gap-2 cursor-pointer">
+                                                            <input type="checkbox" id="stock-status-${p.id}" ${p.inStock ? 'checked' : ''} class="w-4 h-4 accent-amber-500">
+                                                            <span class="font-bold ${p.inStock ? 'text-emerald-400' : 'text-red-400'}">${p.inStock ? 'In Stock' : 'Out of Stock'}</span>
+                                                        </label>
+                                                    </td>
+                                                    <td class="py-3 px-3">
+                                                        <button onclick="App.handleUpdateProductStock('${p.id}')" class="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-[11px] rounded-lg shadow">
+                                                            💾 Save Stock
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- MODULE 5: 🎟️ COUPONS & DISCOUNTS -->
+                    ${activeTab === 'coupons' ? `
+                        <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 space-y-6 shadow-xl">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-stone-700 pb-4">
+                                <div>
+                                    <h2 class="font-serif-luxury text-xl font-bold text-white">🎟️ Coupons & Promo Discounts Manager</h2>
+                                    <p class="text-xs text-stone-400">Create, activate, or delete promo discount codes for customer checkout.</p>
+                                </div>
+                                <button onclick="App.openAddCouponModal()" class="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 font-black text-xs rounded-xl flex items-center gap-1.5 shadow-lg border border-amber-300">
+                                    <i data-lucide="plus" class="w-4 h-4"></i> Create New Coupon Code
+                                </button>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead>
+                                        <tr class="border-b border-stone-700 text-stone-400 uppercase font-semibold">
+                                            <th class="py-3 px-3">Coupon Code</th>
+                                            <th class="py-3 px-3">Discount Value</th>
+                                            <th class="py-3 px-3">Min Order Requirement</th>
+                                            <th class="py-3 px-3">Description</th>
+                                            <th class="py-3 px-3">Expiry Date</th>
+                                            <th class="py-3 px-3">Status</th>
+                                            <th class="py-3 px-3">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-stone-700/60">
+                                        ${coupons.map(c => `
+                                            <tr class="hover:bg-stone-700/30">
+                                                <td class="py-3 px-3 font-bold text-amber-300 font-mono text-sm">${c.code}</td>
+                                                <td class="py-3 px-3 font-bold text-white">${c.type === 'percent' ? `${c.value}% OFF` : `Flat ₹${c.value.toLocaleString('en-IN')} OFF`}</td>
+                                                <td class="py-3 px-3 text-stone-300 font-semibold">Above ₹${c.minTotal.toLocaleString('en-IN')}</td>
+                                                <td class="py-3 px-3 text-stone-400 text-[11px]">${c.description}</td>
+                                                <td class="py-3 px-3 font-mono text-stone-400">${c.expiry}</td>
+                                                <td class="py-3 px-3">
+                                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold ${c.active ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-red-950 text-red-300 border border-red-800'}">
+                                                        ${c.active ? 'Active' : 'Expired'}
+                                                    </span>
+                                                </td>
+                                                <td class="py-3 px-3">
+                                                    <button onclick="App.handleDeleteCoupon('${c.id}')" class="px-3 py-1 bg-red-950 hover:bg-red-900 text-red-300 font-bold text-[11px] rounded-lg border border-red-800">
                                                         🗑️ Delete
                                                     </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- 📜 COMPLETE ORDER HISTORY ARCHIVES SECTION -->
-                    <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-amber-500/30 mb-10 space-y-6 shadow-xl">
-                        <div class="flex justify-between items-center border-b border-stone-700 pb-4">
-                            <div>
-                                <h2 class="font-serif-luxury text-xl font-bold text-amber-200">📜 Complete Order History Archives</h2>
-                                <p class="text-xs text-stone-400">Archived historic records of all customer orders. Admin can view, edit, or delete any history record.</p>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
                             </div>
-                            <span class="text-xs text-amber-300 font-bold bg-stone-900 px-3.5 py-1.5 rounded-lg border border-amber-500/40">
-                                History Records: ${orderHistory.length}
-                            </span>
                         </div>
-                        
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs">
-                                <thead>
-                                    <tr class="border-b border-stone-700 text-stone-400 uppercase font-semibold">
-                                        <th class="py-3 px-3">Order ID</th>
-                                        <th class="py-3 px-3">Date</th>
-                                        <th class="py-3 px-3">Customer</th>
-                                        <th class="py-3 px-3">Phone & Address</th>
-                                        <th class="py-3 px-3">Total Payable</th>
-                                        <th class="py-3 px-3">Payment</th>
-                                        <th class="py-3 px-3">Status</th>
-                                        <th class="py-3 px-3">History Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${orderHistory.length > 0 ? orderHistory.map(h => `
-                                        <tr class="border-b border-stone-700/60 hover:bg-stone-700/30">
-                                            <td class="py-3 px-3 font-bold text-amber-300">${h.id}</td>
-                                            <td class="py-3 px-3 text-[11px] text-stone-400">${new Date(h.date || Date.now()).toLocaleDateString('en-IN')}</td>
-                                            <td class="py-3 px-3 font-semibold text-white">${h.customerName}</td>
-                                            <td class="py-3 px-3">${h.customerPhone || 'N/A'}<br><span class="text-[10px] text-stone-400 line-clamp-1">${h.address || 'N/A'}</span></td>
-                                            <td class="py-3 px-3 font-bold text-amber-300">₹${(h.total || 0).toLocaleString('en-IN')}</td>
-                                            <td class="py-3 px-3"><span class="px-2 py-0.5 rounded bg-stone-900 border border-stone-700 text-[10px]">${h.paymentMethod || 'COD'}</span></td>
-                                            <td class="py-3 px-3">
-                                                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${h.orderStatus === 'Delivered' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : h.orderStatus === 'Cancelled' ? 'bg-red-950 text-red-300 border border-red-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">
-                                                    ${h.orderStatus}
-                                                </span>
-                                            </td>
-                                            <td class="py-3 px-3">
-                                                <div class="flex items-center gap-1.5">
-                                                    <button onclick="App.viewCustomerOrderModal('${h.id}')" class="px-2 py-1 bg-stone-900 hover:bg-stone-950 text-amber-300 font-bold text-[10px] rounded border border-amber-500/40">
-                                                        Tax Invoice
-                                                    </button>
-                                                    <button onclick="App.openAdminEditOrderModal('${h.id}', true)" class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-stone-950 font-bold text-[10px] rounded shadow">
-                                                        ✏️ Edit Record
-                                                    </button>
-                                                    <button onclick="App.handleAdminDeleteHistoryOrder('${h.id}')" class="px-2 py-1 bg-red-950 hover:bg-red-900 text-red-300 font-bold text-[10px] rounded border border-red-800">
-                                                        🗑️ Delete Record
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    `).join('') : `
-                                        <tr>
-                                            <td colspan="8" class="py-8 text-center text-stone-400">No order history records found.</td>
-                                        </tr>
-                                    `}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    ` : ''}
 
-                    <!-- PRODUCTS MANAGEMENT (FULL EDIT CAPABILITIES) -->
-                    <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 space-y-6 shadow-xl">
-                        <div class="flex justify-between items-center border-b border-stone-700 pb-4">
-                            <div>
-                                <h2 class="font-serif-luxury text-xl font-bold text-white">Product Catalogue Inventory Manager</h2>
-                                <p class="text-xs text-stone-400">Admin can add, edit price, weight, making charges, or delete any jewellery item.</p>
-                            </div>
-                            <button onclick="App.openAddProductModal()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs rounded-lg flex items-center gap-1.5 shadow">
-                                <i data-lucide="plus" class="w-4 h-4"></i> Add New Jewellery Item
-                            </button>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            ${products.map(p => `
-                                <div class="bg-stone-900 p-4 rounded-xl border border-stone-700 flex gap-3 items-center justify-between">
-                                    <img src="${p.image}" class="w-16 h-16 rounded-lg object-cover">
-                                    <div class="flex-1 min-w-0">
-                                        <h4 class="font-bold text-white text-xs truncate">${p.name}</h4>
-                                        <span class="text-[10px] text-stone-400">${p.purity} | ${p.weight}g</span>
-                                        <span class="block text-xs font-bold text-amber-400">₹${Store.calculateProductPrice(p).toLocaleString('en-IN')}</span>
-                                    </div>
-                                    <div class="flex flex-col gap-1">
-                                        <button onclick="App.openEditProductModal('${p.id}')" class="px-2 py-1 bg-stone-800 hover:bg-stone-700 text-amber-300 font-bold text-[10px] rounded border border-amber-500/30" title="Edit product details">
-                                            Edit
-                                        </button>
-                                        <button onclick="Store.deleteProduct('${p.id}')" class="px-2 py-1 bg-red-950 hover:bg-red-900 text-red-300 font-bold text-[10px] rounded border border-red-800" title="Delete product">
-                                            Delete
-                                        </button>
-                                    </div>
+                    <!-- MODULE 6: 📈 SALES REPORTS & REVENUE ANALYTICS -->
+                    ${activeTab === 'reports' ? `
+                        <div class="space-y-6">
+                            <!-- Revenue Summary Cards -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div class="bg-stone-800 p-6 rounded-2xl border border-amber-500/30 shadow-xl">
+                                    <span class="text-[11px] text-amber-400 uppercase font-bold tracking-wider">Total Sales Revenue</span>
+                                    <span class="block text-2xl font-bold font-serif-luxury text-amber-300 mt-1">₹${salesStats.totalRevenue.toLocaleString('en-IN')}</span>
+                                    <span class="text-[10px] text-stone-400 mt-1 block">Net Revenue Earned</span>
                                 </div>
-                            `).join('')}
-                        </div>
-                    </div>
+                                <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700 shadow-xl">
+                                    <span class="text-[11px] text-amber-400 uppercase font-bold tracking-wider">Gold Sales Share</span>
+                                    <span class="block text-2xl font-bold font-serif-luxury text-white mt-1">₹${salesStats.goldRevenue.toLocaleString('en-IN')}</span>
+                                    <span class="text-[10px] text-amber-200/80 mt-1 block">22K / 24K / 18K Ornaments</span>
+                                </div>
+                                <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700 shadow-xl">
+                                    <span class="text-[11px] text-stone-400 uppercase font-bold tracking-wider">Silver Sales Share</span>
+                                    <span class="block text-2xl font-bold font-serif-luxury text-white mt-1">₹${salesStats.silverRevenue.toLocaleString('en-IN')}</span>
+                                    <span class="text-[10px] text-stone-400 mt-1 block">925 Sterling Silver Items</span>
+                                </div>
+                                <div class="bg-stone-800 p-6 rounded-2xl border border-stone-700 shadow-xl">
+                                    <span class="text-[11px] text-emerald-400 uppercase font-bold tracking-wider">Estimated 3% Govt GST</span>
+                                    <span class="block text-2xl font-bold font-serif-luxury text-emerald-300 mt-1">₹${salesStats.totalGSTCollected.toLocaleString('en-IN')}</span>
+                                    <span class="text-[10px] text-stone-400 mt-1 block">Tax Invoice Compliance</span>
+                                </div>
+                            </div>
 
-                    <!-- ⭐ CUSTOMER RATINGS & PRODUCT REVIEWS MANAGEMENT -->
+                            <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 space-y-6 shadow-xl">
+                                <div class="flex justify-between items-center border-b border-stone-700 pb-4">
+                                    <div>
+                                        <h2 class="font-serif-luxury text-xl font-bold text-white">📈 Master Sales & Revenue Statement</h2>
+                                        <p class="text-xs text-stone-400">Export or print official store sales analytics report for records.</p>
+                                    </div>
+                                    <button onclick="window.print()" class="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs rounded-xl shadow flex items-center gap-1.5">
+                                        <i data-lucide="printer" class="w-4 h-4"></i> Print Sales Report
+                                    </button>
+                                </div>
+
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-left text-xs">
+                                        <thead>
+                                            <tr class="border-b border-stone-700 text-stone-400 uppercase font-semibold">
+                                                <th class="py-3 px-3">Order ID</th>
+                                                <th class="py-3 px-3">Date</th>
+                                                <th class="py-3 px-3">Customer</th>
+                                                <th class="py-3 px-3">Payment Method</th>
+                                                <th class="py-3 px-3">Order Status</th>
+                                                <th class="py-3 px-3">Revenue Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-stone-700/60">
+                                            ${salesStats.recentSales.map(s => `
+                                                <tr class="hover:bg-stone-700/30">
+                                                    <td class="py-3 px-3 font-bold text-amber-300">${s.id}</td>
+                                                    <td class="py-3 px-3 text-stone-400 text-[11px]">${new Date(s.date || Date.now()).toLocaleDateString('en-IN')}</td>
+                                                    <td class="py-3 px-3 font-semibold text-white">${s.customerName}</td>
+                                                    <td class="py-3 px-3"><span class="px-2 py-0.5 rounded bg-stone-900 border border-stone-700">${s.paymentMethod}</span></td>
+                                                    <td class="py-3 px-3 font-bold ${s.orderStatus === 'Delivered' ? 'text-emerald-400' : 'text-amber-300'}">${s.orderStatus}</td>
+                                                    <td class="py-3 px-3 font-bold text-amber-300 text-sm">₹${(s.total || 0).toLocaleString('en-IN')}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- ⭐ REVIEWS MANAGER IN ALL TABS -->
                     <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 space-y-6 shadow-xl mt-10">
                         <div class="flex justify-between items-center border-b border-stone-700 pb-4">
                             <div>
@@ -3194,6 +3488,70 @@ const App = {
             this.showToast('🔒 Admin session logged out safely. Switched to Customer View.', 'info');
             this.updateUserMenu();
             this.navigateTo('home');
+        }
+    },
+
+    // 👑 ADMIN 7-MODULE NAVIGATION CONTROLS
+    setAdminTab(tabName) {
+        this.adminTab = tabName;
+        this.refreshCurrentView();
+    },
+
+    openAddCouponModal() {
+        const modal = document.getElementById('admin-add-coupon-modal');
+        if (modal) modal.classList.remove('hidden');
+    },
+
+    closeAddCouponModal() {
+        const modal = document.getElementById('admin-add-coupon-modal');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    handleSaveCoupon(e) {
+        e.preventDefault();
+        const code = document.getElementById('cpn-code').value;
+        const type = document.getElementById('cpn-type').value;
+        const value = document.getElementById('cpn-value').value;
+        const minTotal = document.getElementById('cpn-min-total').value;
+        const expiry = document.getElementById('cpn-expiry').value;
+        const description = document.getElementById('cpn-desc').value;
+
+        const res = Store.saveCoupon({ code, type, value, minTotal, expiry, description });
+        if (res.success) {
+            this.showToast(res.message, 'success');
+            this.closeAddCouponModal();
+            this.refreshCurrentView();
+        }
+    },
+
+    handleDeleteCoupon(couponId) {
+        if (confirm('Are you sure you want to delete this discount coupon?')) {
+            Store.deleteCoupon(couponId);
+            this.showToast('Coupon deleted successfully.', 'info');
+            this.refreshCurrentView();
+        }
+    },
+
+    handleUpdateProductStock(productId) {
+        const stockInput = document.getElementById(`stock-count-${productId}`);
+        const statusInput = document.getElementById(`stock-status-${productId}`);
+
+        if (stockInput && statusInput) {
+            const stockCount = parseInt(stockInput.value) || 0;
+            const inStock = statusInput.checked;
+            const res = Store.updateProductStock(productId, stockCount, inStock);
+            if (res.success) {
+                this.showToast(`✅ Stock updated for item #${productId}!`, 'success');
+                this.refreshCurrentView();
+            }
+        }
+    },
+
+    handleToggleCustomerBlock(phone) {
+        if (confirm(`Are you sure you want to change block status for customer ${phone}?`)) {
+            Store.toggleCustomerBlockStatus(phone);
+            this.showToast(`Customer account status updated for ${phone}.`, 'info');
+            this.refreshCurrentView();
         }
     }
 };
