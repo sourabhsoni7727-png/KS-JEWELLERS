@@ -62,11 +62,12 @@ const App = {
         this.navigateTo(viewName, {}, false);
     },
 
-    navigateTo(viewName, params = {}, updateHash = true) {
+    navigateTo(viewName, params = {}, updateHash = true, autoScroll = true) {
+        const isSameView = (this.currentView === viewName);
         this.currentView = viewName;
         this.viewParams = params;
 
-        if (updateHash) {
+        if (updateHash && window.location.hash !== '#' + viewName) {
             window.location.hash = viewName;
         }
 
@@ -79,20 +80,20 @@ const App = {
                 this.initHomeCharts();
             }
 
-            const targetSectionMap = {
-                'home': 'section-hero',
-                'rates': 'section-rates',
-                'about': 'section-owner',
-                'contact': 'section-showroom'
-            };
+            if (autoScroll) {
+                const targetSectionMap = {
+                    'home': 'section-hero',
+                    'rates': 'section-rates',
+                    'about': 'section-owner',
+                    'contact': 'section-showroom'
+                };
 
-            const targetId = targetSectionMap[viewName] || 'section-hero';
-            const targetEl = document.getElementById(targetId);
+                const targetId = targetSectionMap[viewName] || 'section-hero';
+                const targetEl = document.getElementById(targetId);
 
-            if (targetEl) {
-                targetEl.scrollIntoView({ behavior: 'smooth' });
-            } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (targetEl && !isSameView) {
+                    targetEl.scrollIntoView({ behavior: 'smooth' });
+                }
             }
 
             if (window.lucide) {
@@ -102,7 +103,9 @@ const App = {
         }
 
         viewport.innerHTML = '';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (autoScroll) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
         switch (viewName) {
             case 'shop':
@@ -127,7 +130,7 @@ const App = {
     },
 
     refreshCurrentView() {
-        this.navigateTo(this.currentView, this.viewParams, false);
+        this.navigateTo(this.currentView, this.viewParams, false, false);
     },
 
     updateAllProductCardButtons() {
@@ -154,9 +157,7 @@ const App = {
 
     onRatesUpdated() {
         this.updateHeaderTicker();
-        if (this.currentView === 'home' || this.currentView === 'rates' || this.currentView === 'shop') {
-            this.refreshCurrentView();
-        }
+        // Do NOT trigger full page re-render or auto-scroll when background rate simulation ticks
     },
 
     updateHeaderTicker() {
@@ -289,7 +290,7 @@ const App = {
     renderHomeView() {
         const rates = Store.getRates();
         const products = Store.getProducts();
-        const featuredProducts = products.filter(p => p.featured).slice(0, 8);
+        const featuredProducts = (products.filter(p => p.featured).length >= 3 ? products.filter(p => p.featured) : products).slice(0, 3);
 
         return `
             <!-- HERO BANNER -->
@@ -421,7 +422,7 @@ const App = {
                 </div>
             </section>
 
-            <!-- FEATURED PRODUCTS SHOWCASE -->
+            <!-- FEATURED PRODUCTS SHOWCASE (EXACTLY 3 PRODUCTS ON HOME PAGE) -->
             <section id="section-featured" class="py-16 bg-white border-b border-amber-900/10">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="flex flex-col sm:flex-row justify-between items-end mb-10 pb-4 border-b border-stone-200">
@@ -429,13 +430,22 @@ const App = {
                             <span class="text-xs uppercase tracking-widest text-luxury-goldDark font-semibold">Curated Showroom Selection</span>
                             <h2 class="font-serif-luxury text-3xl font-bold text-stone-900">Featured Jewellery</h2>
                         </div>
-                        <button onclick="App.navigateTo('shop')" class="text-xs font-bold uppercase tracking-wider text-luxury-goldDark hover:text-stone-900 flex items-center gap-1 mt-3 sm:mt-0">
-                            View All Collections <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        <button onclick="App.navigateTo('shop')" class="text-xs font-bold uppercase tracking-wider text-luxury-goldDark hover:text-stone-900 flex items-center gap-1 mt-3 sm:mt-0 group">
+                            See All Collections (${products.length}+ Items) <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Grid displaying exactly 3 products -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                         ${featuredProducts.map(p => this.renderProductCard(p)).join('')}
+                    </div>
+
+                    <!-- PROMINENT SEE ALL COLLECTIONS BUTTON DIRECTLY BELOW THE 3 PRODUCTS -->
+                    <div class="mt-12 text-center">
+                        <button onclick="App.navigateTo('shop')" class="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-black text-sm uppercase tracking-widest rounded-2xl shadow-xl hover:shadow-2xl border-2 border-amber-300 transition-all transform hover:-translate-y-1 group">
+                            <span>✨ See All Collections (${products.length}+ Jewellery Items)</span>
+                            <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                        </button>
                     </div>
                 </div>
             </section>
