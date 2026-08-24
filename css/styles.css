@@ -54,6 +54,45 @@ h1, h2, h3, h4, .font-serif-luxury {
     box-shadow: 0 4px 20px rgba(197, 160, 89, 0.25);
 }
 
+/* ROYAL MAROON TOP HEADER & BOTTOM FOOTER THEME */
+header, .bg-maroon-header, #header-top-ticker {
+    background: linear-gradient(135deg, #3B060D 0%, #2A0308 100%) !important;
+    color: #F5E6C4 !important;
+    border-color: #D4AF37 !important;
+}
+
+header h1, header span.gold-text-gradient {
+    background: linear-gradient(135deg, #F7D070 0%, #F5E6C4 40%, #D4AF37 70%, #F7D070 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#mobile-menu-drawer, .bg-maroon-dark {
+    background: #2A0308 !important;
+    color: #F5E6C4 !important;
+    border-color: #D4AF37 !important;
+}
+
+footer {
+    background: linear-gradient(135deg, #2A0308 0%, #3B060D 100%) !important;
+    color: #F5E6C4 !important;
+    border-top: 3px solid #D4AF37 !important;
+}
+
+footer h3, footer h4, footer a, footer p, footer span, footer i {
+    color: #F5E6C4;
+}
+
+footer a:hover {
+    color: #F7D070 !important;
+}
+
+/* MIDDLE VIEWPORT SECTION (WARM WHITE & CLEAN WHITE BACKGROUND) */
+main#app-viewport {
+    background-color: #FAF7F2 !important;
+    color: #1C1917 !important;
+}
+
 /* Warm White Luxury Card Shadow & Hover */
 .luxury-card {
     background: #FFFFFF !important;
@@ -68,7 +107,7 @@ h1, h2, h3, h4, .font-serif-luxury {
     box-shadow: 0 12px 32px rgba(197, 160, 89, 0.15), 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Universal Overrides for Warm White Theme */
+/* Universal Overrides for Middle Viewport Sections */
 .bg-cream-50, .bg-cream-100, .bg-stone-50, .bg-stone-100 {
     background-color: #FAF7F2 !important;
     color: #1C1917 !important;
