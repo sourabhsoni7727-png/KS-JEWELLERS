@@ -293,9 +293,14 @@ const App = {
         const featuredProducts = (products.filter(p => p.featured).length >= 3 ? products.filter(p => p.featured) : products).slice(0, 3);
 
         return `
-            <!-- HERO BANNER -->
-            <section id="section-hero" class="py-10 lg:py-14 bg-stone-950 text-white relative border-b border-amber-900/30">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- HERO BANNER WITH OFFICIAL POSTER -->
+            <section id="section-hero" class="py-8 lg:py-12 bg-stone-950 text-white relative border-b border-amber-900/30 overflow-hidden">
+                <!-- Background Ambient Blur Poster -->
+                <div class="absolute inset-0 opacity-20 blur-2xl pointer-events-none scale-110">
+                    <img src="images/hero-poster.jpg" class="w-full h-full object-cover">
+                </div>
+
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     
                     <!-- Outer Luxury Framed Box -->
                     <div class="relative bg-stone-900/90 rounded-3xl p-6 sm:p-10 border-2 border-amber-500/40 shadow-2xl overflow-hidden backdrop-blur-md">
@@ -305,8 +310,8 @@ const App = {
 
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
                             
-                            <!-- Left Panel: Text Content (Left to Right Entrance Animation) -->
-                            <div class="lg:col-span-7 space-y-6 text-center lg:text-left py-4 animate-slide-left">
+                            <!-- Left Panel: Text Content -->
+                            <div class="lg:col-span-6 space-y-6 text-center lg:text-left py-4 animate-slide-left">
                                 
                                 <!-- Top Pill Tag -->
                                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-stone-950 border border-amber-500/50 text-amber-300 text-[11px] font-bold tracking-widest uppercase shadow-md">
@@ -327,37 +332,34 @@ const App = {
                                 <!-- CTA Button -->
                                 <div class="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
                                     <button onclick="App.navigateTo('shop')" class="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-extrabold text-xs uppercase tracking-widest rounded-full shadow-lg shadow-amber-600/30 transition-all transform hover:-translate-y-0.5 border border-amber-300">
-                                        🛍️ SHOP MORE
+                                        🛍️ SHOP COLLECTION
                                     </button>
                                 </div>
 
                                 <!-- EST 1986 Tag -->
                                 <div class="pt-4 flex items-center justify-center lg:justify-start gap-3 text-xs text-amber-400/80 font-serif-luxury font-bold">
                                     <span class="w-12 h-px bg-amber-500/40"></span>
-                                    <span class="tracking-widest uppercase text-[11px]">EST. 1986</span>
+                                    <span class="tracking-widest uppercase text-[11px]">EST. 1986 &bull; MANDAWA MOAD, JHUNJHUNU</span>
                                     <span class="w-12 h-px bg-amber-500/40"></span>
                                 </div>
 
                             </div>
 
-                            <!-- Right Panel: High-End Bridal Portrait & Metallic Gold Plaque -->
-                            <div class="lg:col-span-5 relative">
-                                <div class="relative rounded-2xl overflow-hidden border-2 border-amber-500/50 shadow-2xl group">
+                            <!-- Right Panel: Official KS Jewellers Poster Image -->
+                            <div class="lg:col-span-6 relative">
+                                <div class="relative rounded-2xl overflow-hidden border-2 border-amber-500/50 shadow-2xl group bg-stone-950">
                                     
-                                    <!-- High Luxury Bridal Photo -->
-                                    <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80" alt="KS Jewellers Pure Elegance Model" class="w-full h-80 sm:h-96 lg:h-[420px] object-cover object-top group-hover:scale-105 transition-transform duration-500">
+                                    <!-- Official Poster Image -->
+                                    <img src="images/hero-poster.jpg" alt="KS Jewellers & Makers Official Showcase Poster" class="w-full h-auto max-h-[520px] object-contain mx-auto group-hover:scale-[1.02] transition-transform duration-500 rounded-2xl">
 
                                     <!-- Metallic Gold Plaque Overlay -->
-                                    <div class="absolute bottom-4 left-4 right-4 bg-gradient-to-r from-amber-700 via-amber-500 to-amber-700 text-stone-950 p-3.5 rounded-xl border border-amber-300 shadow-2xl text-center">
-                                        <h3 class="font-serif-luxury font-black text-lg sm:text-xl uppercase tracking-wider leading-tight">
+                                    <div class="absolute bottom-3 left-3 right-3 bg-stone-950/90 text-amber-300 p-3 rounded-xl border border-amber-500/40 shadow-2xl text-center backdrop-blur-md">
+                                        <h3 class="font-serif-luxury font-black text-sm sm:text-base uppercase tracking-wider text-amber-100 leading-tight">
                                             K.S. JEWELLERS & MAKERS
                                         </h3>
-                                        <p class="text-[11px] font-bold text-stone-900 tracking-wide mt-0.5">
-                                            Mandawa Moad, Jhunjhunu
+                                        <p class="text-[10px] font-semibold text-stone-300 tracking-wide mt-0.5">
+                                            Vinod Kumar Soni &bull; Mandawa Moad, Jhunjhunu
                                         </p>
-                                        <div class="inline-block bg-stone-950 text-amber-300 text-[10px] font-bold px-3 py-0.5 rounded-full mt-1 border border-amber-400">
-                                            Experience: 40 Years &bull; EST. 1986
-                                        </div>
                                     </div>
 
                                 </div>
