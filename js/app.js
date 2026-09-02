@@ -67,7 +67,7 @@ const App = {
         if (catParam) {
             this.activeCategory = catParam;
             localStorage.setItem('ksj_saved_category', catParam);
-        } else {
+        } else if (viewName === 'shop') {
             const savedCat = localStorage.getItem('ksj_saved_category');
             if (savedCat) {
                 this.activeCategory = savedCat;
@@ -82,8 +82,13 @@ const App = {
         this.currentView = viewName;
         this.viewParams = params;
 
-        if (updateHash && window.location.hash !== '#' + viewName) {
-            window.location.hash = viewName;
+        if (updateHash) {
+            const targetHash = (viewName === 'shop' && this.activeCategory && this.activeCategory !== 'all') 
+                ? `shop?category=${this.activeCategory}` 
+                : viewName;
+            if (window.location.hash !== '#' + targetHash) {
+                window.location.hash = targetHash;
+            }
         }
 
         const viewport = document.getElementById('app-viewport');
@@ -663,9 +668,15 @@ const App = {
     renderShopView() {
         let products = Store.getProducts();
 
+        const savedCat = localStorage.getItem('ksj_saved_category');
+        if (savedCat) {
+            this.activeCategory = savedCat;
+        }
+
         // Filters
         if (this.viewParams.category) {
             this.activeCategory = this.viewParams.category;
+            localStorage.setItem('ksj_saved_category', this.viewParams.category);
         }
         if (this.viewParams.wishlistOnly) {
             const wishlist = Store.getWishlist();
