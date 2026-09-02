@@ -63,6 +63,7 @@ const App = {
 
         const searchParams = new URLSearchParams(queryString);
         const catParam = searchParams.get('category') || searchParams.get('cat');
+        const tabParam = searchParams.get('tab');
 
         if (catParam) {
             this.activeCategory = catParam;
@@ -71,6 +72,16 @@ const App = {
             const savedCat = localStorage.getItem('ksj_saved_category');
             if (savedCat) {
                 this.activeCategory = savedCat;
+            }
+        }
+
+        if (tabParam) {
+            this.adminTab = tabParam;
+            localStorage.setItem('ksj_saved_admin_tab', tabParam);
+        } else if (viewName === 'admin') {
+            const savedTab = localStorage.getItem('ksj_saved_admin_tab');
+            if (savedTab) {
+                this.adminTab = savedTab;
             }
         }
 
@@ -83,9 +94,13 @@ const App = {
         this.viewParams = params;
 
         if (updateHash) {
-            const targetHash = (viewName === 'shop' && this.activeCategory && this.activeCategory !== 'all') 
-                ? `shop?category=${this.activeCategory}` 
-                : viewName;
+            let targetHash = viewName;
+            if (viewName === 'shop' && this.activeCategory && this.activeCategory !== 'all') {
+                targetHash = `shop?category=${this.activeCategory}`;
+            } else if (viewName === 'admin' && this.adminTab && this.adminTab !== 'dashboard') {
+                targetHash = `admin?tab=${this.adminTab}`;
+            }
+
             if (window.location.hash !== '#' + targetHash) {
                 window.location.hash = targetHash;
             }
@@ -1533,7 +1548,9 @@ const App = {
             `;
         }
 
-        const activeTab = this.adminTab || 'dashboard';
+        const savedTab = localStorage.getItem('ksj_saved_admin_tab');
+        const activeTab = this.adminTab || savedTab || 'dashboard';
+        this.adminTab = activeTab;
         const rates = Store.getRates();
         const products = Store.getProducts();
         const orders = Store.getOrders();
@@ -4000,6 +4017,10 @@ const App = {
     // 👑 ADMIN 7-MODULE NAVIGATION CONTROLS
     setAdminTab(tabName) {
         this.adminTab = tabName;
+        localStorage.setItem('ksj_saved_admin_tab', tabName);
+        if (this.currentView === 'admin') {
+            window.location.hash = `admin?tab=${tabName}`;
+        }
         this.refreshCurrentView();
     },
 
