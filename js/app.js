@@ -56,9 +56,24 @@ const App = {
     },
 
     handleHashRoute() {
-        const hash = window.location.hash.replace('#', '') || 'home';
-        const parts = hash.split('?');
+        const rawHash = window.location.hash.replace('#', '') || 'home';
+        const parts = rawHash.split('?');
         const viewName = parts[0];
+        const queryString = parts[1] || '';
+
+        const searchParams = new URLSearchParams(queryString);
+        const catParam = searchParams.get('category') || searchParams.get('cat');
+
+        if (catParam) {
+            this.activeCategory = catParam;
+            localStorage.setItem('ksj_saved_category', catParam);
+        } else {
+            const savedCat = localStorage.getItem('ksj_saved_category');
+            if (savedCat) {
+                this.activeCategory = savedCat;
+            }
+        }
+
         this.navigateTo(viewName, {}, false);
     },
 
@@ -757,6 +772,10 @@ const App = {
 
     setCategoryFilter(catId) {
         this.activeCategory = catId;
+        localStorage.setItem('ksj_saved_category', catId);
+        if (this.currentView === 'shop') {
+            window.location.hash = `shop?category=${catId}`;
+        }
         this.refreshCurrentView();
     },
 
@@ -772,9 +791,13 @@ const App = {
 
     resetFilters() {
         this.activeCategory = 'all';
+        localStorage.setItem('ksj_saved_category', 'all');
         this.activeMetalFilter = 'all';
         this.priceSort = 'default';
         this.searchQuery = '';
+        if (this.currentView === 'shop') {
+            window.location.hash = 'shop';
+        }
         this.refreshCurrentView();
     },
 
