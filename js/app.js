@@ -466,18 +466,6 @@ const App = {
                             <div class="lg:col-span-6 relative">
                                 <div class="relative rounded-2xl overflow-hidden border-2 border-luxury-gold/40 shadow-2xl group">
                                     <img src="images/showroom.jpg" alt="KS Jewellers Real Showroom Building Mandawa Moad Jhunjhunu" class="w-full h-80 sm:h-96 object-cover object-center group-hover:scale-105 transition-transform duration-500">
-                                    
-                                    <div class="absolute bottom-4 left-4 right-4 bg-stone-900/90 backdrop-blur-md text-white p-4 rounded-xl border border-amber-500/30">
-                                        <div class="flex justify-between items-center">
-                                            <div>
-                                                <h4 class="font-serif-luxury font-bold text-lg text-amber-200">KS Jewellers and Makers</h4>
-                                                <p class="text-[11px] text-stone-300">Mandawa Moad, Jhunjhunu, Rajasthan</p>
-                                            </div>
-                                            <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded text-[10px] font-bold uppercase tracking-wider">
-                                                Open Today
-                                            </span>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
