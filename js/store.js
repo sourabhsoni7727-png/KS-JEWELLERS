@@ -29,6 +29,101 @@ const Store = {
 
         // Start Live Rate ticker if auto update enabled
         this.startLiveRateSimulation();
+
+        // Start Realtime Cloud Database Sync (Firebase Cloud DB Engine)
+        this.startCloudRealtimeSync();
+    },
+
+    // REAL-TIME CLOUD DATABASE SYNC ENGINE (Firebase Realtime REST Sync)
+    cloudDbEndpoint: 'https://ks-jewellers-default-rtdb.firebaseio.com',
+    
+    async syncToCloud(path, data) {
+        try {
+            const url = `${this.cloudDbEndpoint}/${path}.json`;
+            await fetch(url, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        } catch (err) {
+            console.warn('Cloud Sync Warning:', err);
+        }
+    },
+
+    async fetchFromCloud(path) {
+        try {
+            const url = `${this.cloudDbEndpoint}/${path}.json`;
+            const res = await fetch(url);
+            if (res.ok) {
+                return await res.json();
+            }
+        } catch (err) {
+            console.warn('Cloud Fetch Warning:', err);
+        }
+        return null;
+    },
+
+    async startCloudRealtimeSync() {
+        // Initial sync on page load
+        await this.syncCloudOrders();
+        await this.syncCloudCustomers();
+
+        // Poll Cloud Realtime DB every 6 seconds for multi-device sync
+        setInterval(async () => {
+            await this.syncCloudOrders();
+            await this.syncCloudCustomers();
+        }, 6000);
+    },
+
+    async syncCloudOrders() {
+        const cloudOrdersMap = await this.fetchFromCloud('orders');
+        if (!cloudOrdersMap) return;
+
+        const cloudOrders = Object.values(cloudOrdersMap);
+        let localOrders = this.getOrders();
+        let hasNewOrder = false;
+
+        cloudOrders.forEach(cloudOrd => {
+            if (!cloudOrd || !cloudOrd.id) return;
+            const existingIdx = localOrders.findIndex(o => o.id === cloudOrd.id);
+            if (existingIdx === -1) {
+                localOrders.unshift(cloudOrd);
+                this.syncOrderToHistory(cloudOrd);
+                hasNewOrder = true;
+            } else {
+                localOrders[existingIdx] = { ...localOrders[existingIdx], ...cloudOrd };
+            }
+        });
+
+        if (hasNewOrder) {
+            localStorage.setItem('ksj_orders', JSON.stringify(localOrders));
+            window.dispatchEvent(new CustomEvent('ksj:orders-updated'));
+            if (window.App && typeof window.App.showToast === 'function') {
+                window.App.showToast('🔔 NEW CUSTOMER ORDER RECEIVED LIVE!', 'success');
+            }
+        }
+    },
+
+    async syncCloudCustomers() {
+        const cloudCustMap = await this.fetchFromCloud('customers');
+        if (!cloudCustMap) return;
+
+        const cloudCusts = Object.values(cloudCustMap);
+        let localCusts = this.getRegisteredCustomers();
+        let updated = false;
+
+        cloudCusts.forEach(c => {
+            if (!c || (!c.phone && !c.email)) return;
+            const exists = localCusts.some(lc => (c.phone && lc.phone === c.phone) || (c.email && lc.email === c.email));
+            if (!exists) {
+                localCusts.push(c);
+                updated = true;
+            }
+        });
+
+        if (updated) {
+            localStorage.setItem('ksj_registered_customers', JSON.stringify(localCusts));
+        }
     },
 
     // Rates logic
@@ -278,6 +373,9 @@ const Store = {
 
         customers.push(newUser);
         localStorage.setItem('ksj_registered_customers', JSON.stringify(customers));
+
+        // REAL-TIME CLOUD SYNC
+        this.syncToCloud('customers/' + (cleanPhone || newUser.id), newUser);
 
         // Auto Log In
         localStorage.setItem('ksj_user', JSON.stringify(newUser));
@@ -617,6 +715,10 @@ const Store = {
         localStorage.setItem('ksj_orders', JSON.stringify(orders));
         this.syncOrderToHistory(newOrder);
         this.clearCart();
+
+        // REAL-TIME CLOUD SYNC SO THE ADMIN RECEIVES ORDER IMMEDIATELY ON PHONE/LAPTOP
+        this.syncToCloud('orders/' + newOrder.id, newOrder);
+
         return newOrder;
     },
 
@@ -627,6 +729,10 @@ const Store = {
             order.orderStatus = status;
             localStorage.setItem('ksj_orders', JSON.stringify(orders));
             this.syncOrderToHistory(order);
+
+            // REAL-TIME CLOUD SYNC
+            this.syncToCloud('orders/' + order.id, order);
+
             window.dispatchEvent(new CustomEvent('ksj:orders-updated'));
         }
     },
