@@ -7,7 +7,8 @@
 const App = {
     currentView: 'home',
     viewParams: {},
-    activeCategory: 'all',
+    activeCategory: null,
+    adminTab: null,
     activeMetalFilter: 'all',
     priceSort: 'default',
     searchQuery: '',
@@ -68,21 +69,17 @@ const App = {
         if (catParam) {
             this.activeCategory = catParam;
             localStorage.setItem('ksj_saved_category', catParam);
-        } else if (viewName === 'shop') {
+        } else {
             const savedCat = localStorage.getItem('ksj_saved_category');
-            if (savedCat) {
-                this.activeCategory = savedCat;
-            }
+            this.activeCategory = savedCat || 'all';
         }
 
         if (tabParam) {
             this.adminTab = tabParam;
             localStorage.setItem('ksj_saved_admin_tab', tabParam);
-        } else if (viewName === 'admin') {
+        } else {
             const savedTab = localStorage.getItem('ksj_saved_admin_tab');
-            if (savedTab) {
-                this.adminTab = savedTab;
-            }
+            this.adminTab = savedTab || 'dashboard';
         }
 
         this.navigateTo(viewName, {}, false);
@@ -93,12 +90,21 @@ const App = {
         this.currentView = viewName;
         this.viewParams = params;
 
+        if (viewName === 'admin') {
+            const savedTab = localStorage.getItem('ksj_saved_admin_tab');
+            if (savedTab) {
+                this.adminTab = savedTab;
+            }
+        }
+
         if (updateHash) {
             let targetHash = viewName;
-            if (viewName === 'shop' && this.activeCategory && this.activeCategory !== 'all') {
-                targetHash = `shop?category=${this.activeCategory}`;
-            } else if (viewName === 'admin' && this.adminTab && this.adminTab !== 'dashboard') {
-                targetHash = `admin?tab=${this.adminTab}`;
+            if (viewName === 'shop') {
+                const cat = this.activeCategory || localStorage.getItem('ksj_saved_category') || 'all';
+                if (cat !== 'all') targetHash = `shop?category=${cat}`;
+            } else if (viewName === 'admin') {
+                const tab = this.adminTab || localStorage.getItem('ksj_saved_admin_tab') || 'dashboard';
+                if (tab !== 'dashboard') targetHash = `admin?tab=${tab}`;
             }
 
             if (window.location.hash !== '#' + targetHash) {
@@ -1551,6 +1557,7 @@ const App = {
         const savedTab = localStorage.getItem('ksj_saved_admin_tab');
         const activeTab = this.adminTab || savedTab || 'dashboard';
         this.adminTab = activeTab;
+        localStorage.setItem('ksj_saved_admin_tab', activeTab);
         const rates = Store.getRates();
         const products = Store.getProducts();
         const orders = Store.getOrders();
