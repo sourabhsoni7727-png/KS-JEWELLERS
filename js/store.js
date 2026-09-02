@@ -965,50 +965,64 @@ const Store = {
     // 👥 CUSTOMER MANAGEMENT ENGINE
     getCustomers() {
         const orders = this.getOrderHistory();
+        const registered = this.getRegisteredCustomers();
         const customerMap = {};
 
-        // Aggregate customer data from orders & saved profiles
+        // 1. Add ALL registered customers from Database first
+        registered.forEach(reg => {
+            const phoneKey = (reg.phone || reg.emailOrPhone || reg.email || 'N/A').trim();
+            if (phoneKey) {
+                customerMap[phoneKey] = {
+                    id: reg.id || 'cust-' + Date.now(),
+                    name: reg.name || 'Registered Customer',
+                    phone: reg.phone || reg.emailOrPhone || 'N/A',
+                    email: reg.email || '',
+                    password: reg.password || '123456',
+                    address: 'Registered Online Customer',
+                    totalOrders: 0,
+                    totalSpent: 0,
+                    lastOrderDate: reg.registeredAt || new Date().toISOString(),
+                    registeredAt: reg.registeredAt || new Date().toISOString(),
+                    isBlocked: false
+                };
+            }
+        });
+
+        // 2. Aggregate order history data into customer map
         orders.forEach(o => {
-            const phone = o.customerPhone || 'N/A';
+            const phone = (o.customerPhone || 'N/A').trim();
             if (!customerMap[phone]) {
                 customerMap[phone] = {
                     name: o.customerName || 'Valued Customer',
                     phone: phone,
+                    email: '',
+                    password: '••••••',
                     address: o.address || 'Jhunjhunu, Rajasthan',
                     totalOrders: 0,
                     totalSpent: 0,
                     lastOrderDate: o.date,
+                    registeredAt: o.date,
                     isBlocked: false
                 };
             }
             customerMap[phone].totalOrders += 1;
             customerMap[phone].totalSpent += (o.total || 0);
+            if (o.address) customerMap[phone].address = o.address;
             if (new Date(o.date) > new Date(customerMap[phone].lastOrderDate)) {
                 customerMap[phone].lastOrderDate = o.date;
             }
         });
 
-        // Add saved customer profile if available
-        const savedProfile = this.getSavedCustomerProfile();
-        if (savedProfile && savedProfile.phone && !customerMap[savedProfile.phone]) {
-            customerMap[savedProfile.phone] = {
-                name: savedProfile.name || 'Registered Customer',
-                phone: savedProfile.phone,
-                address: 'Registered Online Customer',
-                totalOrders: 0,
-                totalSpent: 0,
-                lastOrderDate: new Date().toISOString(),
-                isBlocked: false
-            };
-        }
-
         // Merge block status from localStorage
         const blockedPhones = JSON.parse(localStorage.getItem('ksj_blocked_customers')) || [];
-        Object.keys(customerMap).forEach(p => {
-            if (blockedPhones.includes(p)) {
-                customerMap[p].isBlocked = true;
+        Object.keys(customerMap).forEach(phone => {
+            if (blockedPhones.includes(phone)) {
+                customerMap[phone].isBlocked = true;
             }
         });
+
+        return Object.values(customerMap);
+    },
 
         return Object.values(customerMap);
     },

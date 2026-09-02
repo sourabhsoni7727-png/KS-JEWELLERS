@@ -1884,11 +1884,11 @@ const App = {
                         <div class="bg-stone-800 rounded-3xl p-6 sm:p-8 border border-stone-700 space-y-6 shadow-xl">
                             <div class="flex justify-between items-center border-b border-stone-700 pb-4">
                                 <div>
-                                    <h2 class="font-serif-luxury text-xl font-bold text-white">👥 Customer Directory & Account Management</h2>
-                                    <p class="text-xs text-stone-400">View registered customers, purchase totals, order history counts, and manage account block status.</p>
+                                    <h2 class="font-serif-luxury text-xl font-bold text-white">👥 Customer Directory & Database Management</h2>
+                                    <p class="text-xs text-stone-400">View real-time registered customer profiles, mobile numbers, passwords, emails, total orders, and block status.</p>
                                 </div>
                                 <span class="text-xs text-amber-300 font-bold bg-stone-900 px-3.5 py-1.5 rounded-lg border border-stone-700">
-                                    Total Customers: ${customers.length}
+                                    Total Registered Customers: ${customers.length}
                                 </span>
                             </div>
 
@@ -1897,8 +1897,10 @@ const App = {
                                     <thead>
                                         <tr class="border-b border-stone-700 text-stone-400 uppercase font-semibold">
                                             <th class="py-3 px-3">Customer Name</th>
-                                            <th class="py-3 px-3">Mobile Number</th>
-                                            <th class="py-3 px-3">Delivery Address</th>
+                                            <th class="py-3 px-3">Mobile & Contact</th>
+                                            <th class="py-3 px-3">Email Address</th>
+                                            <th class="py-3 px-3">Password</th>
+                                            <th class="py-3 px-3">Registered Date</th>
                                             <th class="py-3 px-3">Total Orders</th>
                                             <th class="py-3 px-3">Total Spent (₹)</th>
                                             <th class="py-3 px-3">Account Status</th>
@@ -1908,9 +1910,17 @@ const App = {
                                     <tbody class="divide-y divide-stone-700/60">
                                         ${customers.map(c => `
                                             <tr class="hover:bg-stone-700/30">
-                                                <td class="py-3 px-3 font-bold text-white">${c.name}</td>
-                                                <td class="py-3 px-3 font-mono text-amber-300 font-bold">${c.phone}</td>
-                                                <td class="py-3 px-3 text-stone-300"><span class="line-clamp-1 text-[11px]">${c.address}</span></td>
+                                                <td class="py-3 px-3">
+                                                    <span class="font-bold text-white block">${c.name}</span>
+                                                    <span class="text-[10px] text-stone-400 block">${c.address}</span>
+                                                </td>
+                                                <td class="py-3 px-3">
+                                                    <span class="font-mono text-amber-300 font-bold block">${c.phone}</span>
+                                                    ${c.phone && c.phone !== 'N/A' ? `<a href="tel:${c.phone}" class="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 hover:underline mt-0.5">📞 Call Customer</a>` : ''}
+                                                </td>
+                                                <td class="py-3 px-3 text-stone-300 font-mono text-[11px]">${c.email || 'N/A'}</td>
+                                                <td class="py-3 px-3 font-mono text-amber-200 text-[11px] font-bold bg-stone-900/60 px-2 py-1 rounded border border-stone-700/50 inline-block">${c.password || '••••••'}</td>
+                                                <td class="py-3 px-3 text-stone-400 text-[11px]">${c.registeredAt ? new Date(c.registeredAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</td>
                                                 <td class="py-3 px-3 font-bold text-amber-200">${c.totalOrders} Orders</td>
                                                 <td class="py-3 px-3 font-bold text-emerald-400">₹${c.totalSpent.toLocaleString('en-IN')}</td>
                                                 <td class="py-3 px-3">
@@ -1920,7 +1930,7 @@ const App = {
                                                 </td>
                                                 <td class="py-3 px-3">
                                                     <button onclick="App.handleToggleCustomerBlock('${c.phone}')" class="px-3 py-1 text-[11px] font-bold rounded-lg shadow transition-colors ${c.isBlocked ? 'bg-emerald-600 hover:bg-emerald-500 text-stone-950' : 'bg-red-950 hover:bg-red-900 text-red-200 border border-red-800'}">
-                                                        ${c.isBlocked ? '✅ Unblock Account' : '🚫 Block Account'}
+                                                        ${c.isBlocked ? '✅ Unblock' : '🚫 Block'}
                                                     </button>
                                                 </td>
                                             </tr>
