@@ -1050,33 +1050,38 @@ const App = {
             base
         ];
 
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels,
-                datasets: [{
-                    label: '22K Gold Rate per Gram (INR)',
-                    data: dataPoints,
-                    borderColor: '#C5A059',
-                    backgroundColor: 'rgba(197, 160, 89, 0.1)',
-                    fill: true,
-                    tension: 0.35,
-                    borderWidth: 2,
-                    pointBackgroundColor: '#1C1917'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
+        if (typeof Chart === 'undefined') return;
+        try {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: '22K Gold Rate per Gram (INR)',
+                        data: dataPoints,
+                        borderColor: '#C5A059',
+                        backgroundColor: 'rgba(197, 160, 89, 0.1)',
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#1C1917'
+                    }]
                 },
-                scales: {
-                    y: { grid: { color: 'rgba(0,0,0,0.05)' } },
-                    x: { grid: { display: false } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
                 }
-            }
-        });
+            });
+        } catch (err) {
+            console.warn('Live Rate Chart skip:', err);
+        }
         this.calculateEstimate();
     },
 

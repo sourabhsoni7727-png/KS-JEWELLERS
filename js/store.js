@@ -63,16 +63,20 @@ const Store = {
         return null;
     },
 
-    async startCloudRealtimeSync() {
-        // Initial sync on page load
-        await this.syncCloudOrders();
-        await this.syncCloudCustomers();
+    startCloudRealtimeSync() {
+        try {
+            // Initial sync on page load without blocking main thread
+            this.syncCloudOrders().catch(err => console.warn('Cloud sync orders err:', err));
+            this.syncCloudCustomers().catch(err => console.warn('Cloud sync cust err:', err));
 
-        // Poll Cloud Realtime DB every 6 seconds for multi-device sync
-        setInterval(async () => {
-            await this.syncCloudOrders();
-            await this.syncCloudCustomers();
-        }, 6000);
+            // Poll Cloud Realtime DB every 6 seconds for multi-device sync
+            setInterval(() => {
+                this.syncCloudOrders().catch(err => console.warn('Cloud sync orders err:', err));
+                this.syncCloudCustomers().catch(err => console.warn('Cloud sync cust err:', err));
+            }, 6000);
+        } catch (err) {
+            console.warn('Cloud Realtime Sync err:', err);
+        }
     },
 
     async syncCloudOrders() {
