@@ -113,61 +113,69 @@ const App = {
         }
 
         const viewport = document.getElementById('app-viewport');
+        if (!viewport) return;
 
-        // Smooth Continuous Single Page Navigation for Home, Rates, About, Contact
-        if (['home', 'rates', 'about', 'contact'].includes(viewName)) {
-            if (!document.getElementById('section-hero')) {
-                viewport.innerHTML = this.renderHomeView();
-                this.initHomeCharts();
-            }
-
-            if (autoScroll) {
-                const targetSectionMap = {
-                    'home': 'section-hero',
-                    'rates': 'section-rates',
-                    'about': 'section-owner',
-                    'contact': 'section-showroom'
-                };
-
-                const targetId = targetSectionMap[viewName] || 'section-hero';
-                const targetEl = document.getElementById(targetId);
-
-                if (targetEl && !isSameView) {
-                    targetEl.scrollIntoView({ behavior: 'smooth' });
+        try {
+            // Smooth Continuous Single Page Navigation for Home, Rates, About, Contact
+            if (['home', 'rates', 'about', 'contact'].includes(viewName)) {
+                if (!document.getElementById('section-hero')) {
+                    viewport.innerHTML = this.renderHomeView();
+                    this.initHomeCharts();
                 }
+
+                if (autoScroll) {
+                    const targetSectionMap = {
+                        'home': 'section-hero',
+                        'rates': 'section-rates',
+                        'about': 'section-owner',
+                        'contact': 'section-showroom'
+                    };
+
+                    const targetId = targetSectionMap[viewName] || 'section-hero';
+                    const targetEl = document.getElementById(targetId);
+
+                    if (targetEl && !isSameView) {
+                        targetEl.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+
+                try {
+                    if (window.lucide) lucide.createIcons();
+                } catch(e) {}
+                return;
             }
 
-            if (window.lucide) {
-                lucide.createIcons();
+            viewport.innerHTML = '';
+            if (autoScroll) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-            return;
-        }
 
-        viewport.innerHTML = '';
-        if (autoScroll) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        switch (viewName) {
-            case 'shop':
-                viewport.innerHTML = this.renderShopView();
-                break;
-            case 'track':
-                viewport.innerHTML = this.renderTrackView();
-                break;
-            case 'account':
-                viewport.innerHTML = this.renderAccountView();
-                break;
-            case 'admin':
-                viewport.innerHTML = this.renderAdminView();
-                break;
-            default:
+            switch (viewName) {
+                case 'shop':
+                    viewport.innerHTML = this.renderShopView();
+                    break;
+                case 'track':
+                    viewport.innerHTML = this.renderTrackView();
+                    break;
+                case 'account':
+                    viewport.innerHTML = this.renderAccountView();
+                    break;
+                case 'admin':
+                    viewport.innerHTML = this.renderAdminView();
+                    break;
+                default:
+                    viewport.innerHTML = this.renderHomeView();
+            }
+        } catch(err) {
+            console.error('Navigation Render Error:', err);
+            try {
                 viewport.innerHTML = this.renderHomeView();
+            } catch(e) {}
         }
 
-        if (window.lucide) {
-            lucide.createIcons();
-        }
+        try {
+            if (window.lucide) lucide.createIcons();
+        } catch(e) {}
     },
 
     refreshCurrentView() {
@@ -594,18 +602,21 @@ const App = {
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        ${INITIAL_REVIEWS.map(rev => `
-                            <div class="luxury-card rounded-2xl p-6 space-y-4 shadow-sm">
-                                <div class="flex text-amber-400">
-                                    ${'<i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>'.repeat(rev.rating)}
+                        ${(Store.getReviews() || INITIAL_REVIEWS).map(rev => {
+                            const r = Math.max(1, Math.min(5, parseInt(rev.rating) || 5));
+                            return `
+                                <div class="luxury-card rounded-2xl p-6 space-y-4 shadow-sm">
+                                    <div class="flex text-amber-400">
+                                        ${'<i data-lucide="star" class="w-4 h-4 fill-amber-400"></i>'.repeat(r)}
+                                    </div>
+                                    <p class="text-xs text-stone-600 leading-relaxed italic">"${rev.comment || 'Authentic jewellery with complete transparency.'}"</p>
+                                    <div class="pt-2 border-t border-stone-100 flex justify-between items-center text-xs">
+                                        <span class="font-bold text-stone-900">${rev.name || 'Valued Patron'}</span>
+                                        <span class="text-[10px] text-stone-400">${rev.city || 'Jhunjhunu'}</span>
+                                    </div>
                                 </div>
-                                <p class="text-xs text-stone-600 leading-relaxed italic">"${rev.comment}"</p>
-                                <div class="pt-2 border-t border-stone-100 flex justify-between items-center text-xs">
-                                    <span class="font-bold text-stone-900">${rev.name}</span>
-                                    <span class="text-[10px] text-stone-400">${rev.city}</span>
-                                </div>
-                            </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                 </div>
             </section>
