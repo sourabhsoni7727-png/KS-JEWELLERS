@@ -27,14 +27,14 @@ def start_server():
 
     for port in PREFERRED_PORTS:
         try:
-            httpd = socketserver.TCPServer(("127.0.0.1", port), LuxuryJewelleryHandler)
+            httpd = socketserver.TCPServer(("", port), LuxuryJewelleryHandler)
             active_port = port
             break
         except OSError:
             continue
 
     if not httpd:
-        httpd = socketserver.TCPServer(("127.0.0.1", 0), LuxuryJewelleryHandler)
+        httpd = socketserver.TCPServer(("", 0), LuxuryJewelleryHandler)
         active_port = httpd.socket.getsockname()[1]
 
     url = f"http://localhost:{active_port}"

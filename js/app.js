@@ -1550,6 +1550,7 @@ const App = {
                     `}
 
                 </div>
+            </section>
         `;
     },
 

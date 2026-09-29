@@ -1028,9 +1028,6 @@ const Store = {
         return Object.values(customerMap);
     },
 
-        return Object.values(customerMap);
-    },
-
     toggleCustomerBlockStatus(phone) {
         let blockedPhones = JSON.parse(localStorage.getItem('ksj_blocked_customers')) || [];
         if (blockedPhones.includes(phone)) {
@@ -1124,6 +1121,3 @@ const Store = {
         };
     }
 };
-
-// Initialize Store
-Store.init();
