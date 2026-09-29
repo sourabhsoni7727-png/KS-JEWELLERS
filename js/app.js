@@ -4090,7 +4090,16 @@ const App = {
     }
 };
 
-// Initialize App on DOM Load
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize App Fail-Safe Engine (Runs even if DOMContentLoaded already fired)
+function launchApp() {
+    if (window._ksjAppInitialized) return;
+    window._ksjAppInitialized = true;
+    Store.init();
     App.init();
-});
+}
+
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(launchApp, 0);
+} else {
+    document.addEventListener('DOMContentLoaded', launchApp);
+}
